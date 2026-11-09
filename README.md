@@ -1,75 +1,120 @@
 # Generador de QR para vehículos
 
-Aplicación de escritorio para Windows que captura información de vehículos y crea un código QR con todos los datos. El QR contiene texto, no una dirección web, por lo que puede leerse sin conexión a internet.
+Aplicación de escritorio para **macOS y Windows** de **Rangel Venta de Autos**. Captura los datos de cada vehículo y crea un código QR con toda la información. El inventario vive **en la nube (Supabase)**, así que varios equipos (por ejemplo, las 2 Macs de la agencia) ven y editan los mismos autos, también fuera de la oficina.
 
-La cabecera incluye el logotipo de **Rangel Venta de Autos** proporcionado para el proyecto.
+El QR contiene texto, no una dirección web, por lo que se puede leer con cualquier celular **sin internet**.
+
+> La versión anterior, solo para Windows y con base de datos local, sigue en `GeneradorQrAutos/`. Más abajo se explica cómo pasar sus datos a la nube.
 
 ## Datos incluidos
 
-- Marca y modelo.
-- Año.
-- Kilometraje.
-- Precio en MXN.
-- Procedencia: nacional, americano regularizado o americano no regularizado.
-- Motor/litraje, por ejemplo `5.0 L`.
-- Configuración del motor, por ejemplo `V8`.
-- Observaciones opcionales.
-
-El folio fue omitido intencionalmente.
-
-## Almacenamiento local
-
-Los registros se guardan en SQLite en:
-
-`%LOCALAPPDATA%\GeneradorQrAutos\vehiculos.db`
-
-No se usa servidor, cuenta en la nube ni conexión a internet durante el uso normal.
-
-## Compilar
-
-Requiere .NET 10 SDK y una máquina Windows. La primera compilación necesita restaurar los paquetes NuGet `Microsoft.Data.Sqlite` y `QRCoder`; después se puede publicar como aplicación autónoma.
-
-```powershell
-dotnet restore .\GeneradorQrAutos\GeneradorQrAutos.csproj
-dotnet build .\GeneradorQrAutos\GeneradorQrAutos.csproj -c Release
-```
-
-Para entregar una carpeta que no dependa de que .NET esté instalado:
-
-```powershell
-dotnet publish .\GeneradorQrAutos\GeneradorQrAutos.csproj -c Release -r win-x64 --self-contained true
-```
-
-La carpeta publicada se puede copiar a otra computadora Windows y ejecutar sin conexión.
+Marca y modelo, año, kilometraje, precio en MXN, procedencia (nacional, americano regularizado o americano no regularizado), motor/litraje (`5.0 L`), configuración del motor (`V8`) y observaciones opcionales.
 
 ## Funciones
 
-- **Vista previa en vivo:** el QR se actualiza mientras escribes; no hace falta guardar para verlo.
+- **Vista previa en vivo** del QR mientras escribes.
 - **QR con el logotipo** de Rangel al centro, con corrección de errores alta para que se siga leyendo.
-- **Ficha para imprimir** tamaño carta: logo, marca y modelo, precio destacado, datos principales y QR grande. Se puede guardar como PNG o imprimir (para PDF elige la impresora «Microsoft Print to PDF»).
-- **Copiar QR** al portapapeles para pegarlo en WhatsApp, Word, etc.
-- **Inventario:** búsqueda instantánea, editar, marcar como vendido o disponible y eliminar.
+- **Ficha PDF** tamaño carta: se abre en el visor del sistema (Vista Previa en Mac) para imprimir con ⌘P / Ctrl+P o mandarla por WhatsApp o correo.
+- **Ficha PNG**, **Guardar QR** y **Copiar QR** (se copia como imagen y como archivo, para pegarlo en WhatsApp, Word, Finder…).
+- **Inventario compartido:** búsqueda instantánea, editar, marcar como vendido o disponible y eliminar.
 - **Resumen** en el encabezado: autos disponibles, valor del inventario y autos vendidos.
-- Validación en el mismo formulario, autocompletado de marcas y modelos, y litraje normalizado (`5` → `5.0 L`).
-
-Las bases de datos de versiones anteriores se actualizan solas al abrir la aplicación (se agregan las columnas `vendido` y `actualizado_en`).
-
-## Uso
-
-1. Captura los datos del vehículo; la vista previa del QR aparece en cuanto los campos con * están completos.
-2. Pulsa **Generar QR y guardar** (Ctrl+S).
-3. Usa **Ficha PNG**, **Imprimir ficha**, **Guardar QR** o **Copiar QR** según lo que necesites.
-4. Para modificar un registro, haz doble clic sobre él en el inventario (o selecciónalo y pulsa Enter), cambia los datos y pulsa **Guardar cambios**.
-5. Haz clic derecho sobre un vehículo para marcarlo como vendido o eliminarlo.
+- **Dos equipos a la vez:** si los dos editan el mismo auto, el segundo en guardar recibe el aviso *"Otro equipo modificó este auto. Se recargaron los datos más recientes."* y nada se sobrescribe sin darse cuenta.
+- **Sin internet:** aparece la barra roja *"Sin conexión — reintentando…"*, no se puede guardar hasta que vuelva la conexión y lo que estás escribiendo no se pierde.
+- **Respaldo local automático:** cada vez que se abre la app guarda una copia del inventario en `Documentos/GeneradorQR/respaldos/` (se conservan las 7 más recientes).
 
 ### Atajos de teclado
 
+En Mac se usa ⌘; en Windows, Ctrl.
+
 | Atajo | Acción |
 | --- | --- |
-| Ctrl+S | Guardar |
-| Ctrl+N | Nuevo vehículo |
-| Ctrl+P | Imprimir ficha |
-| Ctrl+E | Guardar ficha como PNG |
-| Ctrl+Shift+C | Copiar QR |
-| Ctrl+F | Buscar en el inventario |
-| Enter / Supr | Abrir / eliminar el vehículo seleccionado |
+| ⌘S / Ctrl+S | Guardar |
+| ⌘N / Ctrl+N | Nuevo vehículo |
+| ⌘P / Ctrl+P | Abrir ficha PDF |
+| ⌘E / Ctrl+E | Guardar ficha como PNG |
+| ⌘⇧C / Ctrl+Shift+C | Copiar QR |
+| ⌘F / Ctrl+F | Buscar en el inventario |
+| Enter / Supr | Editar / eliminar el vehículo seleccionado |
+
+## 1. Configurar Supabase (una sola vez)
+
+1. Crea una cuenta y un proyecto en [supabase.com](https://supabase.com) (plan gratuito).
+2. En **SQL Editor**, pega y ejecuta [`supabase/schema.sql`](supabase/schema.sql).
+3. En **Authentication → Sign In / Providers → Email**, desactiva *Allow new users to sign up*.
+4. En **Authentication → Users → Add user**, crea la cuenta de la agencia (correo y contraseña) marcando *Auto Confirm User*.
+5. En **Project Settings → API**, copia *Project URL* y la llave *anon public*. Crea `src/GeneradorQr.App/supabase.json` a partir de `supabase.example.json`:
+
+   ```json
+   { "Url": "https://xxxx.supabase.co", "AnonKey": "eyJ..." }
+   ```
+
+   La llave *anon* es pública por diseño: sin iniciar sesión con la cuenta de la agencia no deja leer ni escribir nada. **Nunca** pongas ahí la *service_role key*. `supabase.json` está en `.gitignore`.
+
+> **Importante (plan gratuito):** si nadie usa la app durante 7 días, Supabase pausa el proyecto. Se reactiva con un clic desde el panel, sin perder datos. Mientras esté pausado, la app muestra *"No se pudo conectar con el servidor."*
+
+## 2. Compilar y entregar
+
+Requiere **.NET 10 SDK**.
+
+### macOS (sin cuenta de Apple Developer)
+
+En una Mac:
+
+```bash
+bash build/build-mac.sh arm64   # Mac con chip Apple (M1, M2…). Usa x64 para Mac con Intel.
+```
+
+Se genera `dist/GeneradorQR-mac-arm64.zip` con `Generador QR.app` (firma ad-hoc) e `instalar.command`.
+
+**Instalar en cada Mac:** descomprime el zip y haz doble clic en `instalar.command`. El script copia la app a Aplicaciones y le quita el bloqueo de seguridad. Si macOS no deja abrir el script, ve a *Ajustes del Sistema → Privacidad y seguridad → "Abrir de todos modos"*. Hay que repetirlo con cada actualización.
+
+### Windows
+
+```powershell
+powershell -ExecutionPolicy Bypass -File build\build-windows.ps1
+```
+
+Se genera `dist\GeneradorQR-windows.zip`, una carpeta autónoma (no necesita .NET instalado) con `GeneradorQr.App.exe` y `supabase.json`.
+
+### Probar sin Supabase (modo demo)
+
+Con la variable de entorno `GENERADORQR_DEMO=1`, la app abre con un inventario de ejemplo en memoria y sin pedir login. Sirve para mostrarla; nada se guarda al cerrar.
+
+```powershell
+$env:GENERADORQR_DEMO = "1"; dotnet run --project src/GeneradorQr.App
+```
+
+## 3. Pasar los autos de la versión anterior a la nube
+
+Ejecuta en la computadora Windows que tiene la base anterior:
+
+```powershell
+dotnet run --project src/GeneradorQr.Migrate -- "$env:LOCALAPPDATA\GeneradorQrAutos\vehiculos.db" src\GeneradorQr.App\supabase.json
+```
+
+Pide el correo y la contraseña de la agencia y sube todos los autos, conservando si estaban vendidos y su fecha de captura. Si la nube ya tiene autos, se niega para no duplicarlos. Para forzarlo, agrega `--force`.
+
+## Dónde guarda cosas la app
+
+| Qué | Windows | macOS |
+| --- | --- | --- |
+| Sesión (token, nunca la contraseña) y log de errores | `%LOCALAPPDATA%\GeneradorQR\` | `~/Library/Application Support/GeneradorQR/` |
+| Respaldos del inventario | `Documentos\GeneradorQR\respaldos\` | `~/Documents/GeneradorQR/respaldos/` |
+
+Si algo falla, revisa `errores.log` en la carpeta de la primera fila.
+
+## Para desarrolladores
+
+```
+src/GeneradorQr.Core     modelos, texto del QR, validación, QR y ficha (SkiaSharp), búsqueda, respaldos
+src/GeneradorQr.Cloud    Supabase: autenticación y repositorio REST (bloqueo optimista con columna version)
+src/GeneradorQr.App      interfaz Avalonia (macOS + Windows)
+src/GeneradorQr.Migrate  importación única del SQLite de la versión anterior
+tests/GeneradorQr.Tests  pruebas xUnit
+```
+
+```powershell
+dotnet test tests/GeneradorQr.Tests
+```
+
+El diseño está en `docs/superpowers/specs/` y el plan de implementación en `docs/superpowers/plans/`.

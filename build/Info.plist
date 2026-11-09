@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>Generador QR</string>
+  <key>CFBundleDisplayName</key>
+  <string>Generador QR</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.rangel.generadorqr</string>
+  <key>CFBundleExecutable</key>
+  <string>GeneradorQr.App</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>2.0.0</string>
+  <key>CFBundleVersion</key>
+  <string>2.0.0</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>es-MX</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>12.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+</dict>
+</plist>
