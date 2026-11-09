@@ -93,7 +93,36 @@ public sealed class SupabaseAuth(HttpClient http, SupabaseOptions options, ISess
         }
     }
 
-    public void SignOut() => ClearSession();
+    /// <summary>
+    /// Revoca la sesión de este equipo en Supabase (scope=local: el otro equipo sigue conectado)
+    /// y borra el token guardado. Si no hay red, se borra igual el token local.
+    /// </summary>
+    public async Task SignOutAsync(CancellationToken ct)
+    {
+        await _lock.WaitAsync(ct);
+        try
+        {
+            if (_accessToken is not null)
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{options.Url}/auth/v1/logout?scope=local");
+                request.Headers.Add("apikey", options.AnonKey);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _accessToken);
+                try
+                {
+                    using var _ = await SupabaseHttp.SendAsync(http, request, ct);
+                }
+                catch (Exception ex) when (ex is OfflineException or ServerUnavailableException)
+                {
+                    // Sin red o servidor caído: no se puede revocar ahora; el token local se borra igual.
+                }
+            }
+        }
+        finally
+        {
+            ClearSession();
+            _lock.Release();
+        }
+    }
 
     /// <summary>Devuelve null si Supabase rechaza las credenciales o el refresh token (4xx).</summary>
     private async Task<TokenResponse?> RequestTokenAsync(string grantType, object body, CancellationToken ct)

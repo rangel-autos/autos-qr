@@ -145,15 +145,35 @@ public class SupabaseAuthTests
     }
 
     [Fact]
-    public async Task SignOut_LimpiaSesion()
+    public async Task SignOut_RevocaEnServidorYLimpiaSesion()
     {
         var (auth, http, store, _) = Create();
-        http.Respond(HttpStatusCode.OK, TokenJson("a1", "r1"));
+        http.Respond(HttpStatusCode.OK, TokenJson("a1", "r1"))
+            .Respond(HttpStatusCode.NoContent);
         await auth.SignInAsync("a@b.mx", "x", default);
 
-        auth.SignOut();
+        await auth.SignOutAsync(default);
 
+        var req = http.Requests[1];
+        Assert.Equal(HttpMethod.Post, req.Method);
+        Assert.Equal("/auth/v1/logout?scope=local", req.PathAndQuery);
+        Assert.Equal("Bearer a1", req.Headers["Authorization"]);
+        Assert.Equal("anon-key", req.Headers["apikey"]);
         Assert.Null(store.Token);
         await Assert.ThrowsAsync<AuthRequiredException>(() => auth.GetAccessTokenAsync(default));
+    }
+
+    [Fact]
+    public async Task SignOut_SinRed_LimpiaSesionLocalDeTodosModos()
+    {
+        var (auth, http, store, _) = Create();
+        http.Respond(HttpStatusCode.OK, TokenJson("a1", "r1"))
+            .Throw(new HttpRequestException("sin red"));
+        await auth.SignInAsync("a@b.mx", "x", default);
+
+        await auth.SignOutAsync(default);
+
+        Assert.Null(store.Token);
+        Assert.False(auth.IsSignedIn);
     }
 }
