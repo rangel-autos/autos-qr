@@ -1,0 +1,8 @@
+.dotnet-home/
+**/bin/
+**/obj/
+*.mp4
+*.csproj.user
+.superpowers/
+supabase.json
+dist/
