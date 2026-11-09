@@ -34,7 +34,10 @@ public sealed class SupabaseAuth(HttpClient http, SupabaseOptions options, ISess
         }
     }
 
-    /// <summary>Intenta reanudar la sesión guardada. Devuelve false si no hay o si ya no es válida.</summary>
+    /// <summary>
+    /// Intenta reanudar la sesión guardada. Devuelve false si no hay o si ya no es válida.
+    /// Sin red lanza <see cref="OfflineException"/> pero conserva el token para renovarlo al volver la conexión.
+    /// </summary>
     public async Task<bool> TryRestoreAsync(CancellationToken ct)
     {
         var saved = store.Load();
@@ -46,6 +49,8 @@ public sealed class SupabaseAuth(HttpClient http, SupabaseOptions options, ISess
         await _lock.WaitAsync(ct);
         try
         {
+            _refreshToken = saved;
+            _accessToken = null;
             var session = await RequestTokenAsync("refresh_token", new { refresh_token = saved }, ct);
             if (session is null)
             {

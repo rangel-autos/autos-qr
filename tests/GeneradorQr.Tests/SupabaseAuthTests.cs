@@ -126,6 +126,22 @@ public class SupabaseAuthTests
     }
 
     [Fact]
+    public async Task TryRestore_SinRed_ConservaTokenParaReintentar()
+    {
+        var (auth, http, store, _) = Create();
+        store.Token = "r0";
+        http.Throw(new HttpRequestException("sin red"))
+            .Respond(HttpStatusCode.OK, TokenJson("a1", "r1"));
+
+        await Assert.ThrowsAsync<OfflineException>(() => auth.TryRestoreAsync(default));
+
+        Assert.True(auth.IsSignedIn);
+        Assert.Equal("r0", store.Token);
+        Assert.Equal("a1", await auth.GetAccessTokenAsync(default));
+        Assert.Contains("\"refresh_token\":\"r0\"", http.Requests[1].Body);
+    }
+
+    [Fact]
     public async Task SinRed_LanzaOffline()
     {
         var (auth, http, _, _) = Create();

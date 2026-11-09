@@ -1,0 +1,66 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="GeneradorQr.App.App"
+             RequestedThemeVariant="Light">
+  <Application.Resources>
+    <ResourceDictionary>
+      <Color x:Key="BrandRed">#D6181F</Color>
+      <Color x:Key="BrandRedDark">#AC0F15</Color>
+      <Color x:Key="BrandInk">#161619</Color>
+      <Color x:Key="BrandMuted">#6C7078</Color>
+      <Color x:Key="BrandSurface">#F3F4F6</Color>
+      <Color x:Key="BrandBorder">#DDDFE4</Color>
+      <SolidColorBrush x:Key="BrandRedBrush" Color="{StaticResource BrandRed}" />
+      <SolidColorBrush x:Key="BrandRedDarkBrush" Color="{StaticResource BrandRedDark}" />
+      <SolidColorBrush x:Key="BrandInkBrush" Color="{StaticResource BrandInk}" />
+      <SolidColorBrush x:Key="BrandMutedBrush" Color="{StaticResource BrandMuted}" />
+      <SolidColorBrush x:Key="BrandSurfaceBrush" Color="{StaticResource BrandSurface}" />
+      <SolidColorBrush x:Key="BrandBorderBrush" Color="{StaticResource BrandBorder}" />
+      <SolidColorBrush x:Key="SuccessBrush" Color="#15803D" />
+      <SolidColorBrush x:Key="SuccessTintBrush" Color="#E1F5E9" />
+      <SolidColorBrush x:Key="WarningTintBrush" Color="#FEF3DB" />
+      <!-- Acento de Fluent con el rojo de la marca. -->
+      <Color x:Key="SystemAccentColor">#D6181F</Color>
+      <Color x:Key="SystemAccentColorDark1">#AC0F15</Color>
+      <Color x:Key="SystemAccentColorDark2">#8C0A10</Color>
+      <Color x:Key="SystemAccentColorLight1">#E2454B</Color>
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{StaticResource BrandRedBrush}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Padding" Value="16,9" />
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{StaticResource BrandRedDarkBrush}" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+      <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="TextBlock.label">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource BrandMutedBrush}" />
+      <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+    <Style Selector="TextBlock.error">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{StaticResource BrandRedBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="{StaticResource BrandBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Padding" Value="16" />
+    </Style>
+  </Application.Styles>
+</Application>

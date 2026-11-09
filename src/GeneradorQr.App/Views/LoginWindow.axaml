@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GeneradorQr.App.ViewModels"
+        x:Class="GeneradorQr.App.Views.LoginWindow"
+        x:DataType="vm:LoginViewModel"
+        Title="Generador QR — Iniciar sesión"
+        Icon="avares://GeneradorQr.App/Assets/rangel-logo.png"
+        Width="420" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrandSurfaceBrush}">
+  <Border Classes="card" Margin="24">
+    <StackPanel Spacing="14">
+      <Image Source="avares://GeneradorQr.App/Assets/rangel-logo.png" Height="110" HorizontalAlignment="Center" />
+      <TextBlock Text="Iniciar sesión" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"
+                 Foreground="{StaticResource BrandInkBrush}" />
+
+      <StackPanel>
+        <TextBlock Classes="label" Text="Correo" />
+        <TextBox x:Name="EmailBox" Text="{Binding Email}" Watermark="agencia@ejemplo.com" />
+      </StackPanel>
+
+      <StackPanel>
+        <TextBlock Classes="label" Text="Contraseña" />
+        <TextBox Text="{Binding Password}" PasswordChar="●" />
+      </StackPanel>
+
+      <TextBlock Classes="error" Text="{Binding Error}" IsVisible="{Binding Error, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+      <Button Classes="primary" Content="Entrar" IsDefault="True" HorizontalAlignment="Stretch"
+              HorizontalContentAlignment="Center"
+              Command="{Binding SignInCommand}"
+              IsEnabled="{Binding !IsBusy}" />
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+    </StackPanel>
+  </Border>
+</Window>

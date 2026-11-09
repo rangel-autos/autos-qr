@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/GeneradorQr.App/GeneradorQr.App.csproj" />
     <Project Path="src/GeneradorQr.Cloud/GeneradorQr.Cloud.csproj" />
     <Project Path="src/GeneradorQr.Core/GeneradorQr.Core.csproj" />
     <Project Path="src/GeneradorQr.Migrate/GeneradorQr.Migrate.csproj" />

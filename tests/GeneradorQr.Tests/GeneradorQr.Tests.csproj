@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\GeneradorQr.Core\GeneradorQr.Core.csproj" />
     <ProjectReference Include="..\..\src\GeneradorQr.Cloud\GeneradorQr.Cloud.csproj" />
     <ProjectReference Include="..\..\src\GeneradorQr.Migrate\GeneradorQr.Migrate.csproj" />
+    <ProjectReference Include="..\..\src\GeneradorQr.App\GeneradorQr.App.csproj" />
   </ItemGroup>
 
 </Project>
