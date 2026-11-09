@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using GeneradorQr.App.Services;
 using GeneradorQr.App.ViewModels;
 using GeneradorQr.App.Views;
 using GeneradorQr.Cloud;
@@ -42,6 +43,15 @@ public sealed class App : Application
 
     private async Task StartAsync()
     {
+        if (DemoVehicleRepository.IsEnabled)
+        {
+            // Modo demo: inventario en memoria, sin Supabase ni login.
+            _options = new SupabaseOptions("https://demo.invalid", "demo");
+            _auth = new SupabaseAuth(_http, _options, new DemoSessionStore(), TimeProvider.System);
+            ShowMain(new DemoVehicleRepository());
+            return;
+        }
+
         var configPath = AppPaths.ConfigFile;
         try
         {
@@ -95,9 +105,9 @@ public sealed class App : Application
         SetMainWindow(window);
     }
 
-    private void ShowMain()
+    private void ShowMain(IVehicleRepository? repository = null)
     {
-        var repository = new SupabaseVehicleRepository(_http, _options!, _auth!);
+        repository ??= new SupabaseVehicleRepository(_http, _options!, _auth!);
         var window = MainWindowFactory.Create(repository, _auth!, OnSignedOut);
         window.Closed += (_, _) =>
         {
@@ -117,4 +127,11 @@ public sealed class App : Application
         _desktop!.MainWindow = window;
         window.Show();
     }
+}
+
+internal sealed class DemoSessionStore : ISessionStore
+{
+    public string? Load() => null;
+    public void Save(string refreshToken) { }
+    public void Clear() { }
 }

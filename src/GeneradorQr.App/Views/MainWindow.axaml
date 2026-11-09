@@ -1,0 +1,237 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GeneradorQr.App.ViewModels"
+        xmlns:views="using:GeneradorQr.App.Views"
+        xmlns:core="using:GeneradorQr.Core"
+        xmlns:models="using:GeneradorQr.Core.Models"
+        x:Class="GeneradorQr.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Generador QR — Rangel Venta de Autos"
+        Icon="avares://GeneradorQr.App/Assets/rangel-logo.png"
+        Width="1280" Height="760" MinWidth="1024" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrandSurfaceBrush}">
+
+  <Window.Styles>
+    <Style Selector="DataGridRow.sold">
+      <Setter Property="Foreground" Value="{StaticResource BrandMutedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.stat-value">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.header">
+      <Setter Property="Background" Value="#2A2A30" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="BorderBrush" Value="#44444C" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.header:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#3A3A42" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="TextBlock.stat-label">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="#B8BBC2" />
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+    <!-- Encabezado -->
+    <Border DockPanel.Dock="Top" Background="{StaticResource BrandInkBrush}" Padding="20,10"
+            BorderBrush="{StaticResource BrandRedBrush}" BorderThickness="0,0,0,3">
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+        <Border Background="White" CornerRadius="8" Padding="4">
+          <Image Source="avares://GeneradorQr.App/Assets/rangel-logo.png" Height="44" />
+        </Border>
+        <StackPanel Grid.Column="1" Margin="14,0" VerticalAlignment="Center">
+          <TextBlock Text="Generador de QR" FontSize="18" FontWeight="Bold" Foreground="White" />
+          <TextBlock Text="Rangel Venta de Autos · Pénjamo, Gto." FontSize="12" Foreground="#B8BBC2" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="28" VerticalAlignment="Center" Margin="0,0,28,0">
+          <StackPanel>
+            <TextBlock Classes="stat-value" Text="{Binding Stats.Disponibles}" />
+            <TextBlock Classes="stat-label" Text="Disponibles" />
+          </StackPanel>
+          <StackPanel>
+            <TextBlock Classes="stat-value" Text="{Binding Stats.ValorDisponible, StringFormat='{}{0:C0}'}" />
+            <TextBlock Classes="stat-label" Text="Valor del inventario" />
+          </StackPanel>
+          <StackPanel>
+            <TextBlock Classes="stat-value" Text="{Binding Stats.Vendidos}" />
+            <TextBlock Classes="stat-label" Text="Vendidos" />
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,16,0">
+          <Ellipse Width="10" Height="10" Fill="#22C55E" IsVisible="{Binding IsOnline}" />
+          <Ellipse Width="10" Height="10" Fill="{StaticResource BrandRedBrush}" IsVisible="{Binding !IsOnline}" />
+          <TextBlock Foreground="White" FontSize="12" VerticalAlignment="Center"
+                     Text="Conectado" IsVisible="{Binding IsOnline}" />
+          <TextBlock Foreground="White" FontSize="12" VerticalAlignment="Center"
+                     Text="Sin conexión" IsVisible="{Binding !IsOnline}" />
+        </StackPanel>
+
+        <Button Grid.Column="4" Classes="header" Content="Actualizar" Command="{Binding RefreshCommand}" Margin="0,0,8,0"
+                ToolTip.Tip="Volver a cargar el inventario" />
+        <Button Grid.Column="5" Classes="header" Content="⋯" ToolTip.Tip="Más opciones">
+          <Button.Flyout>
+            <MenuFlyout>
+              <MenuItem x:Name="SignOutItem" Header="Cerrar sesión" />
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+      </Grid>
+    </Border>
+
+    <!-- Barra de sin conexión -->
+    <Border DockPanel.Dock="Top" Background="{StaticResource BrandRedBrush}" Padding="20,6" IsVisible="{Binding !IsOnline}">
+      <TextBlock Foreground="White" FontWeight="SemiBold" Text="Sin conexión — reintentando…  Lo que escribiste no se pierde." />
+    </Border>
+
+    <!-- Barra de estado -->
+    <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="{StaticResource BrandBorderBrush}"
+            BorderThickness="0,1,0,0" Padding="20,6">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource BrandInkBrush}"
+                   IsVisible="{Binding !StatusIsError}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource BrandRedBrush}" FontWeight="SemiBold"
+                   IsVisible="{Binding StatusIsError}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Column="1" x:Name="ShortcutsHint" FontSize="11" Foreground="{StaticResource BrandMutedBrush}" />
+      </Grid>
+    </Border>
+
+    <Grid ColumnDefinitions="440,*" Margin="16" ColumnSpacing="16">
+      <!-- Formulario -->
+      <Border Classes="card" Padding="0">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Bottom" Margin="16,8,16,16" Spacing="6">
+              <Button Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                      Content="Generar QR y guardar" Command="{Binding SaveCommand}" />
+              <UniformGrid Columns="2" RowSpacing="6" ColumnSpacing="6">
+                <Button x:Name="PdfButton" Content="Ficha PDF" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                <Button x:Name="PngButton" Content="Ficha PNG" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                <Button x:Name="SaveQrButton" Content="Guardar QR" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                <Button x:Name="CopyQrButton" Content="Copiar QR" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+              </UniformGrid>
+              <Button x:Name="NewButton" Content="Nuevo vehículo" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+          </StackPanel>
+        <ScrollViewer>
+          <StackPanel Margin="16" Spacing="10" x:DataType="vm:MainViewModel">
+            <TextBlock Text="{Binding Form.Title}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource BrandInkBrush}"
+                       TextTrimming="CharacterEllipsis" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <StackPanel>
+                <TextBlock Classes="label" Text="Marca *" />
+                <AutoCompleteBox x:Name="MarcaBox" Text="{Binding Form.Marca}" ItemsSource="{Binding MarcaSuggestions}"
+                                 FilterMode="StartsWith" MinimumPrefixLength="1" />
+                <TextBlock Classes="error" Text="{Binding Form.ErrorMarca}" IsVisible="{Binding Form.ErrorMarca, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Modelo *" />
+                <AutoCompleteBox Text="{Binding Form.Modelo}" ItemsSource="{Binding ModeloSuggestions}"
+                                 FilterMode="StartsWith" MinimumPrefixLength="1" />
+                <TextBlock Classes="error" Text="{Binding Form.ErrorModelo}" IsVisible="{Binding Form.ErrorModelo, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <StackPanel>
+                <TextBlock Classes="label" Text="Año" />
+                <NumericUpDown Value="{Binding Form.Anio}" Minimum="{Binding Form.AnioMinimo}" Maximum="{Binding Form.AnioMaximo}"
+                               FormatString="0" Increment="1" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Kilometraje" />
+                <NumericUpDown Value="{Binding Form.Kilometraje}" Minimum="0" Maximum="2000000" FormatString="N0" Increment="1000" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <StackPanel>
+                <TextBlock Classes="label" Text="Precio (MXN) *" />
+                <TextBox x:Name="PrecioBox" Text="{Binding Form.PrecioTexto}" Watermark="495,000" />
+                <TextBlock Classes="error" Text="{Binding Form.ErrorPrecio}" IsVisible="{Binding Form.ErrorPrecio, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Procedencia" />
+                <ComboBox ItemsSource="{x:Static core:Brand.Procedencias}" SelectedItem="{Binding Form.Procedencia}"
+                          HorizontalAlignment="Stretch" />
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+              <StackPanel>
+                <TextBlock Classes="label" Text="Motor (litros) *" />
+                <TextBox x:Name="MotorBox" Text="{Binding Form.MotorLitros}" Watermark="5.0 L" />
+                <TextBlock Classes="error" Text="{Binding Form.ErrorMotor}" IsVisible="{Binding Form.ErrorMotor, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Configuración *" />
+                <AutoCompleteBox Text="{Binding Form.ConfiguracionMotor}" ItemsSource="{x:Static core:Brand.Configuraciones}"
+                                 FilterMode="Contains" MinimumPrefixLength="0" Watermark="V8" />
+                <TextBlock Classes="error" Text="{Binding Form.ErrorConfiguracion}" IsVisible="{Binding Form.ErrorConfiguracion, Converter={x:Static ObjectConverters.IsNotNull}}" />
+              </StackPanel>
+            </Grid>
+
+            <StackPanel>
+              <TextBlock Classes="label" Text="Observaciones" />
+              <TextBox Text="{Binding Form.Observaciones}" AcceptsReturn="True" TextWrapping="Wrap" Height="64" />
+            </StackPanel>
+
+            <!-- Vista previa del QR -->
+            <Border Background="{StaticResource BrandSurfaceBrush}" CornerRadius="8" Padding="10" Height="170">
+              <Grid>
+                <Image Source="{Binding PreviewPng, Converter={x:Static views:PngBytesToBitmapConverter.Instance}}"
+                       RenderOptions.BitmapInterpolationMode="None" />
+                <TextBlock Text="La vista previa del QR aparece cuando los campos con * están completos."
+                           TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" Margin="20"
+                           Foreground="{StaticResource BrandMutedBrush}"
+                           IsVisible="{Binding PreviewPng, Converter={x:Static ObjectConverters.IsNull}}" />
+              </Grid>
+            </Border>
+
+          </StackPanel>
+        </ScrollViewer>
+        </DockPanel>
+      </Border>
+
+      <!-- Inventario -->
+      <Border Grid.Column="1" Classes="card">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,10">
+            <TextBlock Text="Inventario" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                       Foreground="{StaticResource BrandInkBrush}" />
+            <TextBox x:Name="SearchBox" Grid.Column="1" Margin="16,0" Text="{Binding SearchText}"
+                     Watermark="Buscar por marca, modelo, año, motor…" />
+            <CheckBox Grid.Column="2" Content="Mostrar vendidos" IsChecked="{Binding IncludeSold}" />
+          </Grid>
+
+          <DataGrid x:Name="Grid" ItemsSource="{Binding Visible}" IsReadOnly="True" SelectionMode="Single"
+                    CanUserResizeColumns="True" GridLinesVisibility="Horizontal" HeadersVisibility="Column">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Vehículo" Binding="{Binding Titulo}" Width="1.6*" MinWidth="140" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Año" Binding="{Binding Anio}" Width="74" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Kilometraje" Binding="{Binding Kilometraje, StringFormat='{}{0:N0} km'}" Width="112" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='{}{0:C0}'}" Width="112" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Procedencia" Binding="{Binding Procedencia}" Width="1.5*" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Motor" Binding="{Binding Motor}" Width="1.1*" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="104" x:DataType="models:VehicleRecord" />
+            </DataGrid.Columns>
+            <DataGrid.ContextMenu>
+              <ContextMenu>
+                <MenuItem x:Name="EditItem" Header="Editar" />
+                <MenuItem x:Name="ToggleSoldItem" Header="Marcar como vendido / disponible" />
+                <Separator />
+                <MenuItem x:Name="DeleteItem" Header="Eliminar…" />
+              </ContextMenu>
+            </DataGrid.ContextMenu>
+          </DataGrid>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </DockPanel>
+</Window>

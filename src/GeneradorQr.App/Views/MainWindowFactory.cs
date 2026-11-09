@@ -1,30 +1,44 @@
 using Avalonia.Controls;
-using Avalonia.Layout;
+using Avalonia.Threading;
+using GeneradorQr.App.Services;
+using GeneradorQr.App.ViewModels;
 using GeneradorQr.Cloud;
+using GeneradorQr.Core.Backup;
 using GeneradorQr.Core.Data;
 
 namespace GeneradorQr.App.Views;
 
-/// <summary>
-/// Crea la ventana principal. Provisional (Task 8): solo confirma la sesión; la pantalla completa llega en Task 10.
-/// </summary>
+/// <summary>Arma la ventana principal con su ViewModel y la conecta con la sesión.</summary>
 internal static class MainWindowFactory
 {
     public static Window Create(IVehicleRepository repository, SupabaseAuth auth, Action<Window> onSignedOut)
     {
-        var window = new Window { Title = "Generador QR", Width = 480, Height = 240, WindowStartupLocation = WindowStartupLocation.CenterScreen };
-        var signOut = new Button { Content = "Cerrar sesión", HorizontalAlignment = HorizontalAlignment.Center };
-        signOut.Click += async (_, _) =>
+        var vm = new MainViewModel(
+            repository,
+            new BackupService(AppPaths.BackupDir, TimeProvider.System),
+            TimeProvider.System,
+            dispatch: action => Dispatcher.UIThread.Post(action),
+            logError: Log.Error);
+
+        var window = new MainWindow(FileActions.CreateDefault()) { DataContext = vm };
+
+        window.Opened += async (_, _) => await vm.InitializeAsync();
+        window.Closed += (_, _) => vm.Dispose();
+
+        window.SignOutRequested += async (_, _) =>
         {
             await auth.SignOutAsync(CancellationToken.None);
             onSignedOut(window);
         };
-        window.Content = new StackPanel
+
+        vm.SessionExpired += async (_, _) =>
         {
-            VerticalAlignment = VerticalAlignment.Center,
-            Spacing = 12,
-            Children = { new TextBlock { Text = "Sesión iniciada.", HorizontalAlignment = HorizontalAlignment.Center }, signOut }
+            await MessageWindow.ShowAsync(window, "Sesión vencida", "Tu sesión venció. Inicia sesión de nuevo.");
+            await auth.SignOutAsync(CancellationToken.None);
+            window.AllowCloseWithoutPrompt();
+            onSignedOut(window);
         };
+
         return window;
     }
 }

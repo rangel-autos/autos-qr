@@ -110,6 +110,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdatePreview();
     }
 
+    /// <summary>Mensaje en la barra de estado (para acciones de la vista, como exportar).</summary>
+    public void Notify(string message, bool isError = false) => SetStatus(message, isError);
+
     /// <summary>Auto listo para exportar (ficha o QR); null si el formulario no es válido.</summary>
     public VehicleRecord? CurrentVehicle() => Form.TryBuild(out var v, showErrors: true) ? v : null;
 
