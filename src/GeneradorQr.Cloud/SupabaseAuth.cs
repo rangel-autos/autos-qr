@@ -40,7 +40,17 @@ public sealed class SupabaseAuth(HttpClient http, SupabaseOptions options, ISess
     /// </summary>
     public async Task<bool> TryRestoreAsync(CancellationToken ct)
     {
-        var saved = store.Load();
+        string? saved;
+        try
+        {
+            saved = store.Load();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Archivo de sesión ilegible: se pide iniciar sesión de nuevo.
+            return false;
+        }
+
         if (saved is null)
         {
             return false;
@@ -144,7 +154,7 @@ public sealed class SupabaseAuth(HttpClient http, SupabaseOptions options, ISess
             return null;
         }
 
-        var token = await response.Content.ReadFromJsonAsync<TokenResponse>(ct);
+        var token = await SupabaseHttp.ReadJsonAsync<TokenResponse>(response, ct);
         return token is { AccessToken.Length: > 0, RefreshToken.Length: > 0 } ? token : null;
     }
 

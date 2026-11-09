@@ -31,7 +31,7 @@ try
     await auth.SignInAsync(email.Trim(), password, CancellationToken.None);
 
     var repository = new SupabaseVehicleRepository(http, options, auth);
-    var migrator = new Migrator(repository, repository.InsertMigratedAsync);
+    var migrator = new Migrator(repository, repository.InsertManyMigratedAsync);
     var count = await migrator.RunAsync(local, force, CancellationToken.None);
 
     Console.WriteLine($"Listo: se subieron {count} autos.");

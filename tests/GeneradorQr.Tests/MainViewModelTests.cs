@@ -323,4 +323,83 @@ public sealed class MainViewModelTests : IDisposable
         Assert.Equal("495,000", vm.Form.PrecioTexto);
         Assert.Equal("5.0 L", vm.Form.MotorLitros);
     }
+
+    [Fact]
+    public async Task Reconexion_AuthRequired_DisparaSesionVencida()
+    {
+        var vm = Create();
+        await vm.InitializeAsync();
+        var fired = 0;
+        vm.SessionExpired += (_, _) => fired++;
+        _repo.Offline = true;
+        await vm.RefreshCommand.ExecuteAsync(null);
+        await vm.SaveCommand.ExecuteAsync(null);
+        FillValid(vm.Form);
+        await vm.SaveCommand.ExecuteAsync(null);
+
+        _repo.Offline = false;
+        _repo.FailNext = new AuthRequiredException();
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        await vm.ReconnectTask!;
+
+        Assert.Equal(1, fired);
+    }
+
+    [Fact]
+    public async Task Reconexion_ErrorInesperado_SigueReintentando()
+    {
+        var vm = Create();
+        await vm.InitializeAsync();
+        FillValid(vm.Form);
+        _repo.Offline = true;
+        await vm.SaveCommand.ExecuteAsync(null);
+
+        _repo.Offline = false;
+        _repo.FailNext = new InvalidOperationException("respuesta rara");
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        _clock.Advance(TimeSpan.FromSeconds(5));
+        await vm.ReconnectTask!;
+
+        Assert.True(vm.IsOnline);
+    }
+
+    [Fact]
+    public async Task SesionVencida_SoloSeAvisaUnaVez()
+    {
+        var vm = Create();
+        await vm.InitializeAsync();
+        var fired = 0;
+        vm.SessionExpired += (_, _) => fired++;
+
+        _repo.FailNext = new AuthRequiredException();
+        await vm.RefreshCommand.ExecuteAsync(null);
+        _repo.FailNext = new AuthRequiredException();
+        _clock.Advance(TimeSpan.FromSeconds(60));
+        _repo.FailNext = new AuthRequiredException();
+        await vm.OnWindowActivatedAsync();
+
+        Assert.Equal(1, fired);
+    }
+
+    [Fact]
+    public async Task ConflictoEnOtroAuto_NoBorraLoQueSeEstaEscribiendo()
+    {
+        var a = _repo.Seed(Lobo());
+        var otro = Lobo();
+        otro.Modelo = "Ranger";
+        var b = _repo.Seed(otro);
+        var vm = Create();
+        await vm.InitializeAsync();
+        vm.Edit(vm.All.Single(v => v.Id == a.Id));
+        vm.Form.PrecioTexto = "123456";
+        var staleB = vm.All.Single(v => v.Id == b.Id);
+        _repo.TouchFromOtherDevice(b.Id, r => r.Precio = 1m);
+
+        await vm.ToggleVendidoCommand.ExecuteAsync(staleB);
+
+        Assert.Equal("123456", vm.Form.PrecioTexto);
+        Assert.True(vm.Form.IsDirty);
+        Assert.Equal(a.Id, vm.Form.Editing!.Id);
+        Assert.Equal(1m, vm.All.Single(v => v.Id == b.Id).Precio);
+    }
 }

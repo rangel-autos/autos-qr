@@ -87,7 +87,7 @@ public sealed class MigratorTests : IDisposable
     {
         var repo = new FakeRepository();
         repo.Seed(new VehicleRecord { Marca = "Ya", Modelo = "Existe" });
-        var migrator = new Migrator(repo, repo.InsertAsync);
+        var migrator = new Migrator(repo, InsertMany(repo));
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             migrator.RunAsync(SqliteReader.ReadAll(CreateDb(true)), force: false, default));
@@ -101,7 +101,7 @@ public sealed class MigratorTests : IDisposable
     {
         var repo = new FakeRepository();
         repo.Seed(new VehicleRecord { Marca = "Ya", Modelo = "Existe" });
-        var migrator = new Migrator(repo, repo.InsertAsync);
+        var migrator = new Migrator(repo, InsertMany(repo));
 
         var count = await migrator.RunAsync(SqliteReader.ReadAll(CreateDb(true)), force: true, default);
 
@@ -114,7 +114,7 @@ public sealed class MigratorTests : IDisposable
     {
         var repo = new FakeRepository();
         var local = SqliteReader.ReadAll(CreateDb(true));
-        var migrator = new Migrator(repo, repo.InsertAsync);
+        var migrator = new Migrator(repo, InsertMany(repo));
 
         var count = await migrator.RunAsync(local.Reverse().ToList(), force: false, default);
 
@@ -122,5 +122,27 @@ public sealed class MigratorTests : IDisposable
         Assert.Equal(["Lobo", "Versa"], repo.Rows.Select(r => r.Modelo));
         Assert.True(repo.Rows[0].Vendido);
         Assert.Equal(local[0].CreadoEn, repo.Rows[0].CreadoEn);
+    }
+
+    private int _bulkCalls;
+
+    /// <summary>Inserción en bloque contra el repositorio falso; cuenta cuántas llamadas hubo.</summary>
+    private Func<IReadOnlyList<VehicleRecord>, CancellationToken, Task<int>> InsertMany(FakeRepository repo) => async (rows, ct) =>
+    {
+        _bulkCalls++;
+        foreach (var r in rows) await repo.InsertAsync(r, ct);
+        return rows.Count;
+    };
+
+    [Fact]
+    public async Task Migrar_InsertaTodoEnUnaSolaLlamada()
+    {
+        var repo = new FakeRepository();
+        var migrator = new Migrator(repo, InsertMany(repo));
+
+        await migrator.RunAsync(SqliteReader.ReadAll(CreateDb(true)), force: false, default);
+
+        Assert.Equal(1, _bulkCalls);
+        Assert.Equal(2, repo.Rows.Count);
     }
 }

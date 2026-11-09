@@ -44,4 +44,18 @@ public class VehicleValidatorTests
         Assert.Equal("V8", record.ConfiguracionMotor);
         Assert.Equal("Único dueño", record.Observaciones);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1899)]
+    [InlineData(2101)]
+    public void Validate_AnioFueraDeRango_Error(int anio)
+    {
+        var input = new VehicleInput("Ford", "Lobo", anio, 0, "100", "Nacional", "5.0 L", "V8", "");
+
+        var errors = VehicleValidator.Validate(input, out var record, maxYear: 2028);
+
+        Assert.Null(record);
+        Assert.Equal(new ValidationError(nameof(VehicleInput.Anio), "Escribe un año entre 1900 y 2028."), Assert.Single(errors));
+    }
 }

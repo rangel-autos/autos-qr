@@ -12,7 +12,12 @@ public sealed class ConnectionMonitor(TimeProvider clock)
     public void MarkOffline() => IsOnline = false;
 
     /// <summary>Ejecuta <paramref name="probe"/> cada <see cref="RetryInterval"/> hasta que no falle por red.</summary>
-    public async Task RunUntilOnlineAsync(Func<Task> probe, CancellationToken ct)
+    /// <remarks>
+    /// <see cref="AuthRequiredException"/> y la cancelación se propagan; cualquier otro error se
+    /// registra con <paramref name="logError"/> y se reintenta, para que el aviso de "sin conexión"
+    /// no se quede pegado para siempre por una respuesta inesperada.
+    /// </remarks>
+    public async Task RunUntilOnlineAsync(Func<Task> probe, CancellationToken ct, Action<Exception>? logError = null)
     {
         IsOnline = false;
         while (!ct.IsCancellationRequested)
@@ -27,6 +32,10 @@ public sealed class ConnectionMonitor(TimeProvider clock)
             catch (Exception ex) when (ex is OfflineException or ServerUnavailableException)
             {
                 // Sigue sin conexión: se reintenta.
+            }
+            catch (Exception ex) when (ex is not (AuthRequiredException or OperationCanceledException))
+            {
+                logError?.Invoke(ex);
             }
         }
     }

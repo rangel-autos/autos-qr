@@ -34,6 +34,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private ITimer? _previewTimer;
     private List<VehicleRecord> _all = [];
     private bool _refreshing;
+    private bool _sessionExpired;
 
     public MainViewModel(
         IVehicleRepository repository,
@@ -181,7 +182,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Form.UpdateEditingMeta(saved);
             ApplyFilter();
             SetStatus(saved.Vendido ? $"{saved.Titulo} marcado como vendido." : $"{saved.Titulo} marcado como disponible.", isError: false);
-        });
+        }, vehicle.Id);
     }
 
     [RelayCommand(CanExecute = nameof(CanModify))]
@@ -200,7 +201,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             ApplyFilter();
             SetStatus($"{vehicle.Titulo} eliminado.", isError: false);
-        });
+        }, vehicle.Id);
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -209,7 +210,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private async Task RefreshCoreAsync()
     {
-        if (_refreshing || !IsOnline) return;
+        if (_refreshing || !IsOnline || _sessionExpired) return;
         _refreshing = true;
         try
         {
@@ -247,7 +248,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>Ejecuta una operación con el manejo común de errores. Devuelve true si terminó bien.</summary>
-    private async Task<bool> TryRunAsync(Func<Task> operation)
+    private async Task<bool> TryRunAsync(Func<Task> operation, long? conflictingId = null)
     {
         try
         {
@@ -260,11 +261,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (ConcurrencyConflictException)
         {
-            await ReloadAfterConflictAsync();
+            await ReloadAfterConflictAsync(conflictingId);
         }
         catch (AuthRequiredException)
         {
-            SessionExpired?.Invoke(this, EventArgs.Empty);
+            ExpireSession();
         }
         catch (ServerUnavailableException ex)
         {
@@ -275,7 +276,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         return false;
     }
 
-    private async Task ReloadAfterConflictAsync()
+    /// <summary>
+    /// Recarga tras un conflicto. El formulario solo se reemplaza si se estaba editando el auto
+    /// en conflicto; lo que se escribe en otro auto no se toca.
+    /// </summary>
+    private async Task ReloadAfterConflictAsync(long? conflictingId)
     {
         var editingId = Form.Editing?.Id;
         try
@@ -288,7 +293,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        if (editingId is { } id)
+        if (editingId is { } id && (conflictingId is null || conflictingId == id))
         {
             var current = _all.FirstOrDefault(v => v.Id == id);
             if (current is null) Form.Clear();
@@ -298,6 +303,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         ApplyFilter();
         SetStatus(Messages.Conflict, isError: true);
+    }
+
+    /// <summary>Avisa una sola vez que la sesión venció y detiene las actualizaciones automáticas.</summary>
+    private void ExpireSession()
+    {
+        if (_sessionExpired) return;
+        _sessionExpired = true;
+        _refreshTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        SessionExpired?.Invoke(this, EventArgs.Empty);
     }
 
     private void GoOffline()
@@ -314,10 +328,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         try
         {
-            await _monitor.RunUntilOnlineAsync(LoadAllAsync, _cts.Token);
+            await _monitor.RunUntilOnlineAsync(LoadAllAsync, _cts.Token, ex => _logError(ex, "Reconexión"));
         }
         catch (OperationCanceledException)
         {
+            return;
+        }
+        catch (AuthRequiredException)
+        {
+            _dispatch(ExpireSession);
             return;
         }
 

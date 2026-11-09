@@ -143,6 +143,7 @@
                 <TextBlock Classes="label" Text="Año" />
                 <NumericUpDown Value="{Binding Form.Anio}" Minimum="{Binding Form.AnioMinimo}" Maximum="{Binding Form.AnioMaximo}"
                                FormatString="0" Increment="1" />
+                <TextBlock Classes="error" Text="{Binding Form.ErrorAnio}" IsVisible="{Binding Form.ErrorAnio, Converter={x:Static ObjectConverters.IsNotNull}}" />
               </StackPanel>
               <StackPanel Grid.Column="1">
                 <TextBlock Classes="label" Text="Kilometraje" />

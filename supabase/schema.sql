@@ -51,3 +51,9 @@ alter table public.vehiculos enable row level security;
 drop policy if exists "solo usuarios autenticados" on public.vehiculos;
 create policy "solo usuarios autenticados" on public.vehiculos
   for all to authenticated using (true) with check (true);
+
+-- Permisos explícitos: sin ellos PostgREST responde 403 "permission denied" aunque la política exista
+-- (pasa en proyectos donde se quitaron los permisos por defecto). El rol anon no recibe nada.
+grant select, insert, update, delete on public.vehiculos to authenticated;
+grant usage, select on sequence public.vehiculos_id_seq to authenticated;
+revoke all on public.vehiculos from anon;

@@ -35,10 +35,37 @@ public sealed class App : Application
                     $"Ocurrió un error inesperado:\n{e.Exception.Message}\n\nSe guardó el detalle en:\n{AppPaths.LogFile}");
             };
 
-            _ = StartAsync();
+            _ = StartSafelyAsync();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>
+    /// El arranque corre sin que nadie lo espere: si falla algo inesperado, se registra y se avisa,
+    /// en vez de dejar un proceso vivo sin ninguna ventana.
+    /// </summary>
+    private async Task StartSafelyAsync()
+    {
+        try
+        {
+            await StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Arranque");
+            await MessageWindow.ShowAsync(null, "Error al iniciar",
+                $"No se pudo abrir la aplicación:\n{ex.Message}\n\nSe guardó el detalle en:\n{AppPaths.LogFile}");
+
+            if (_auth is not null && _desktop?.MainWindow is null)
+            {
+                ShowLogin();
+            }
+            else if (_desktop?.MainWindow is null)
+            {
+                _desktop?.Shutdown(1);
+            }
+        }
     }
 
     private async Task StartAsync()

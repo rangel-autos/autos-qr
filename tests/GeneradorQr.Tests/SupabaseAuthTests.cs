@@ -192,4 +192,27 @@ public class SupabaseAuthTests
         Assert.Null(store.Token);
         Assert.False(auth.IsSignedIn);
     }
+
+    [Fact]
+    public async Task RespuestaNoJson_EnLogin_LanzaOffline()
+    {
+        var (auth, http, _, _) = Create();
+        http.Respond(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html>portal</html>") });
+        await Assert.ThrowsAsync<OfflineException>(() => auth.SignInAsync("a@b.mx", "x", default));
+    }
+
+    [Fact]
+    public async Task TryRestore_ArchivoDeSesionIlegible_False()
+    {
+        var http = new FakeHttpHandler();
+        var auth = new SupabaseAuth(http.Client(), Options, new BrokenStore(), new FakeTimeProvider());
+        Assert.False(await auth.TryRestoreAsync(default));
+    }
+
+    private sealed class BrokenStore : ISessionStore
+    {
+        public string? Load() => throw new IOException("bloqueado");
+        public void Save(string refreshToken) => throw new IOException("bloqueado");
+        public void Clear() { }
+    }
 }

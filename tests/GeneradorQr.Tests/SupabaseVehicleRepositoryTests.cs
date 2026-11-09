@@ -194,4 +194,40 @@ public class SupabaseVehicleRepositoryTests
         var ex = await Assert.ThrowsAsync<ServerUnavailableException>(() => repo.InsertAsync(Sample(), default));
         Assert.Contains("check constraint", ex.Message);
     }
+
+    [Fact]
+    public async Task RespuestaNoJson_PortalCautivo_LanzaOffline()
+    {
+        var (repo, http) = await CreateAsync();
+        http.Respond(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html>Inicia sesión en el Wi-Fi</html>", System.Text.Encoding.UTF8, "text/html") });
+        await Assert.ThrowsAsync<OfflineException>(() => repo.GetAllAsync(default));
+    }
+
+    [Fact]
+    public async Task Http403_LanzaServerUnavailableNoSesionVencida()
+    {
+        var (repo, http) = await CreateAsync();
+        http.Respond(HttpStatusCode.Forbidden, """{"message":"permission denied for table vehiculos"}""");
+        var ex = await Assert.ThrowsAsync<ServerUnavailableException>(() => repo.GetAllAsync(default));
+        Assert.Contains("permission denied", ex.Message);
+    }
+
+    [Fact]
+    public async Task InsertManyMigrated_UnSoloPostConArreglo()
+    {
+        var (repo, http) = await CreateAsync();
+        http.Respond(HttpStatusCode.Created, $"[{Row},{Row.Replace("\"id\":5", "\"id\":6")}]");
+        var a = Sample();
+        var b = Sample();
+        b.Modelo = "Ranger";
+
+        var count = await repo.InsertManyMigratedAsync([a, b], default);
+
+        Assert.Equal(2, count);
+        var req = Assert.Single(http.Requests);
+        Assert.Equal(HttpMethod.Post, req.Method);
+        Assert.StartsWith("[", req.Body!.TrimStart());
+        Assert.Contains("\"creado_en\"", req.Body);
+        Assert.Contains("Ranger", req.Body);
+    }
 }

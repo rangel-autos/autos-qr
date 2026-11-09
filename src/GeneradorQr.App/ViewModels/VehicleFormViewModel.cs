@@ -43,7 +43,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
     [ObservableProperty] private bool _isDirty;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ErrorMarca), nameof(ErrorModelo), nameof(ErrorPrecio), nameof(ErrorMotor), nameof(ErrorConfiguracion))]
+    [NotifyPropertyChangedFor(nameof(ErrorMarca), nameof(ErrorModelo), nameof(ErrorAnio), nameof(ErrorPrecio), nameof(ErrorMotor), nameof(ErrorConfiguracion))]
     private IReadOnlyDictionary<string, string> _errors = new Dictionary<string, string>();
 
     public bool IsEditing => Editing is not null;
@@ -51,11 +51,12 @@ public sealed partial class VehicleFormViewModel : ObservableObject
 
     public string? ErrorMarca => Errors.GetValueOrDefault(nameof(VehicleInput.Marca));
     public string? ErrorModelo => Errors.GetValueOrDefault(nameof(VehicleInput.Modelo));
+    public string? ErrorAnio => Errors.GetValueOrDefault(nameof(VehicleInput.Anio));
     public string? ErrorPrecio => Errors.GetValueOrDefault(nameof(VehicleInput.PrecioTexto));
     public string? ErrorMotor => Errors.GetValueOrDefault(nameof(VehicleInput.MotorLitros));
     public string? ErrorConfiguracion => Errors.GetValueOrDefault(nameof(VehicleInput.ConfiguracionMotor));
 
-    public int AnioMinimo => 1900;
+    public int AnioMinimo => VehicleValidator.MinYear;
     public int AnioMaximo => _clock.GetLocalNow().Year + 2;
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -107,7 +108,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
     {
         var input = new VehicleInput(Marca, Modelo, (int)(Anio ?? 0), (long)(Kilometraje ?? 0), PrecioTexto,
             Procedencia, MotorLitros, ConfiguracionMotor, Observaciones);
-        var errors = VehicleValidator.Validate(input, out var record);
+        var errors = VehicleValidator.Validate(input, out var record, AnioMaximo);
 
         if (showErrors)
         {

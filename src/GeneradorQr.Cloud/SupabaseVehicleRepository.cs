@@ -24,9 +24,17 @@ public sealed class SupabaseVehicleRepository(HttpClient http, SupabaseOptions o
     public Task<VehicleRecord> InsertAsync(VehicleRecord vehicle, CancellationToken ct) =>
         InsertCoreAsync(VehicleWrite.From(vehicle), ct);
 
-    /// <summary>Solo para la migración: conserva la fecha de creación original.</summary>
-    public Task<VehicleRecord> InsertMigratedAsync(VehicleRecord vehicle, CancellationToken ct) =>
-        InsertCoreAsync(VehicleWrite.From(vehicle, includeCreatedAt: true), ct);
+    /// <summary>
+    /// Solo para la migración: inserta todos en un solo POST (una transacción en PostgREST)
+    /// y conserva la fecha de creación original. Devuelve cuántos autos quedaron guardados.
+    /// </summary>
+    public async Task<int> InsertManyMigratedAsync(IReadOnlyList<VehicleRecord> vehicles, CancellationToken ct)
+    {
+        if (vehicles.Count == 0) return 0;
+        var rows = await SendAsync(HttpMethod.Post, Table,
+            vehicles.Select(v => VehicleWrite.From(v, includeCreatedAt: true)).ToList(), ct);
+        return rows.Count;
+    }
 
     public async Task<VehicleRecord> UpdateAsync(VehicleRecord vehicle, CancellationToken ct)
     {
@@ -88,7 +96,7 @@ public sealed class SupabaseVehicleRepository(HttpClient http, SupabaseOptions o
             throw new ServerUnavailableException($"El servidor rechazó la operación: {await ReadMessageAsync(response, ct)}");
         }
 
-        return await response.Content.ReadFromJsonAsync<List<VehicleRow>>(ct) ?? [];
+        return await SupabaseHttp.ReadJsonAsync<List<VehicleRow>>(response, ct) ?? [];
     }
 
     private static async Task<string> ReadMessageAsync(HttpResponseMessage response, CancellationToken ct)
