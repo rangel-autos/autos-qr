@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/GeneradorQr.Cloud/GeneradorQr.Cloud.csproj" />
     <Project Path="src/GeneradorQr.Core/GeneradorQr.Core.csproj" />
+    <Project Path="src/GeneradorQr.Migrate/GeneradorQr.Migrate.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GeneradorQr.Tests/GeneradorQr.Tests.csproj" />
