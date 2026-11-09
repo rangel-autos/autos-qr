@@ -77,9 +77,10 @@ create table public.vehiculos (
   observaciones       text not null default '',
   vendido             boolean not null default false,
   creado_en           timestamptz not null default now(),
-  actualizado_en      timestamptz not null default now()
+  actualizado_en      timestamptz not null default now(),
+  version             int not null default 1
 );
--- Trigger: actualizado_en = now() en cada UPDATE.
+-- Trigger: en cada UPDATE, version = version + 1 y actualizado_en = now().
 alter table public.vehiculos enable row level security;
 create policy "solo usuarios autenticados" on public.vehiculos
   for all to authenticated using (true) with check (true);
@@ -95,7 +96,7 @@ Los valores de `procedencia` coinciden con los de la app actual (`Form1.cs:252`)
 
 ### Concurrencia entre equipos
 
-Bloqueo optimista: al editar, el `UPDATE` incluye el filtro `actualizado_en = <valor cargado>`. Si afecta 0 filas, la app avisa "Otro equipo modificó este auto. Se recargaron los datos más recientes." y recarga el registro. Lo mismo aplica a marcar vendido y a eliminar.
+Bloqueo optimista: al editar, el `UPDATE` incluye el filtro `version = <valor cargado>` (se usa un contador y no `actualizado_en` porque los microsegundos de Postgres no hacen round-trip exacto en el filtro de PostgREST). Si afecta 0 filas, la app avisa "Otro equipo modificó este auto. Se recargaron los datos más recientes." y recarga el registro. Lo mismo aplica a marcar vendido y a eliminar.
 
 ### Lectura, búsqueda y resumen
 

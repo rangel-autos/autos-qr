@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\GeneradorQr.Core\GeneradorQr.Core.csproj" />
+    <ProjectReference Include="..\..\src\GeneradorQr.Cloud\GeneradorQr.Cloud.csproj" />
   </ItemGroup>
 
 </Project>
