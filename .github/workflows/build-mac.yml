@@ -1,0 +1,52 @@
+name: Build macOS
+
+# Empaqueta la app para Mac en un runner de macOS (no hace falta tener una Mac).
+# Se lanza a mano (pestaña Actions → Build macOS → Run workflow) o al subir un tag v*.
+# Requiere los secrets SUPABASE_URL y SUPABASE_ANON_KEY en el repositorio.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: macOS ${{ matrix.arch }}
+    runs-on: macos-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]   # arm64 = chip Apple (M1, M2…), x64 = Intel
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Crear supabase.json desde los secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Faltan los secrets SUPABASE_URL y/o SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          jq -n --arg url "$SUPABASE_URL" --arg key "$SUPABASE_ANON_KEY" \
+            '{Url: $url, AnonKey: $key}' > src/GeneradorQr.App/supabase.json
+
+      - name: Empaquetar
+        run: bash build/build-mac.sh ${{ matrix.arch }}
+
+      # Se sube el .zip tal cual (queda un zip dentro del zip de GitHub) para
+      # conservar los permisos de ejecución de la app y de instalar.command.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GeneradorQR-mac-${{ matrix.arch }}
+          path: dist/GeneradorQR-mac-${{ matrix.arch }}.zip
+          if-no-files-found: error
+          retention-days: 30
