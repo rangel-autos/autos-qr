@@ -43,6 +43,7 @@ public static class VehicleValidator
             Modelo = modelo,
             Anio = input.Anio,
             Kilometraje = input.Kilometraje,
+            UnidadDistancia = UnidadDistancia.Normalize(input.UnidadDistancia),
             Precio = precio,
             Procedencia = input.Procedencia,
             MotorLitros = motor,

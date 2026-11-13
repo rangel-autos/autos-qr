@@ -30,6 +30,54 @@ public class VehicleTextTests
     }
 
     [Fact]
+    public void Payload_EnMillas_DiceMillaje()
+    {
+        var vehicle = Sample();
+        vehicle.UnidadDistancia = UnidadDistancia.Mi;
+
+        var payload = VehicleText.BuildPayload(vehicle);
+
+        Assert.Contains("Millaje: 45,000 mi", payload);
+        Assert.DoesNotContain("Kilometraje", payload);
+    }
+
+    [Theory]
+    [InlineData(null, "km")]
+    [InlineData("", "km")]
+    [InlineData("otra", "km")]
+    [InlineData("km", "km")]
+    [InlineData(" MI ", "mi")]
+    public void UnidadDistancia_Normalize(string? unidad, string expected)
+    {
+        Assert.Equal(expected, UnidadDistancia.Normalize(unidad));
+    }
+
+    [Fact]
+    public void QrContent_ConCodigo_EsElEnlaceALaFicha()
+    {
+        var vehicle = Sample();
+        vehicle.Codigo = "a1b2c3d4e5f60718";
+
+        Assert.Equal("https://adrianoblea850.github.io/autos-qr/?a=a1b2c3d4e5f60718", VehicleText.BuildQrContent(vehicle));
+    }
+
+    [Fact]
+    public void QrContent_SinCodigo_LlevaElTexto()
+    {
+        Assert.Equal(VehicleText.BuildPayload(Sample()), VehicleText.BuildQrContent(Sample()));
+    }
+
+    [Fact]
+    public void NuevoCodigo_16CaracteresYDistintos()
+    {
+        var a = VehicleRecord.NuevoCodigo();
+        var b = VehicleRecord.NuevoCodigo();
+
+        Assert.Matches("^[a-f0-9]{16}$", a);
+        Assert.NotEqual(a, b);
+    }
+
+    [Fact]
     public void Payload_SinObservaciones_OmiteLinea()
     {
         Assert.DoesNotContain("Observaciones:", VehicleText.BuildPayload(Sample("  ")));

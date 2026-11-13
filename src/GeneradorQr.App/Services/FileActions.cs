@@ -72,7 +72,7 @@ public sealed class FileActions(Action<string> launcher, string tempDir) : IFile
     public static byte[] RenderQrPng(VehicleRecord vehicle)
     {
         using var logo = BrandAssets.LoadLogo();
-        using var qr = QrRenderer.Render(VehicleText.BuildPayload(vehicle), pixelsPerModule: 12, logo: logo);
+        using var qr = QrRenderer.Render(VehicleText.BuildQrContent(vehicle), pixelsPerModule: 12, logo: logo);
         return QrRenderer.EncodePng(qr);
     }
 
@@ -93,8 +93,8 @@ public sealed class FileActions(Action<string> launcher, string tempDir) : IFile
     private static byte[] RenderSheet(VehicleRecord vehicle, bool pdf)
     {
         using var logo = BrandAssets.LoadLogo();
-        using var qr = QrRenderer.Render(VehicleText.BuildPayload(vehicle), pixelsPerModule: 10, logo: logo);
-        return pdf ? SheetRenderer.RenderPdf(vehicle, qr, logo) : SheetRenderer.RenderPng(vehicle, qr, logo);
+        using var qr = QrRenderer.Render(VehicleText.BuildQrContent(vehicle), pixelsPerModule: 10, logo: logo);
+        return pdf ? SheetRenderer.RenderPdf(qr, logo) : SheetRenderer.RenderPng(qr, logo);
     }
 
     private static async Task<string?> SaveAsync(Window owner, string suggestedName, Func<byte[]> render)

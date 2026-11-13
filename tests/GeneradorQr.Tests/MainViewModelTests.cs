@@ -39,6 +39,39 @@ public sealed class MainViewModelTests : IDisposable
     }
 
     [Fact]
+    public void Form_AutoNuevo_ConservaSuCodigoHastaLimpiar()
+    {
+        var form = new VehicleFormViewModel(TimeProvider.System);
+        FillValid(form);
+
+        Assert.True(form.TryBuild(out var first));
+        form.Kilometraje = 12000;
+        Assert.True(form.TryBuild(out var second));
+        form.Clear();
+        FillValid(form);
+        Assert.True(form.TryBuild(out var third));
+
+        // El QR de la vista previa es el mismo que se guarda; un auto nuevo estrena código.
+        Assert.Matches("^[a-f0-9]{16}$", first.Codigo);
+        Assert.Equal(first.Codigo, second.Codigo);
+        Assert.NotEqual(first.Codigo, third.Codigo);
+    }
+
+    [Fact]
+    public void Form_AlEditar_UsaElCodigoDelAuto()
+    {
+        var form = new VehicleFormViewModel(TimeProvider.System);
+        var lobo = Lobo();
+        lobo.Id = 7;
+        lobo.Codigo = "a1b2c3d4e5f60718";
+        form.Load(lobo);
+
+        Assert.True(form.TryBuild(out var built));
+
+        Assert.Equal("a1b2c3d4e5f60718", built.Codigo);
+    }
+
+    [Fact]
     public async Task Initialize_CargaInventarioYEscribeRespaldo()
     {
         _repo.Seed(Lobo());

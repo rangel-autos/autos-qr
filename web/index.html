@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#161619">
+  <title>Rangel Venta de Autos</title>
+  <link rel="icon" href="logo.png">
+  <style>
+    :root {
+      --red: #d6181f;
+      --ink: #161619;
+      --muted: #6c7078;
+      --surface: #f3f4f6;
+      --border: #dddfe4;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; min-height: 100%; }
+
+    body {
+      background: var(--surface);
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* La "hoja": mismo formato que la ficha impresa, a lo ancho del celular. */
+    .sheet {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      max-width: 520px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    @media (min-width: 560px) {
+      body { padding: 24px 0; }
+      .sheet { min-height: 0; border-radius: 14px; box-shadow: 0 8px 30px rgba(22, 22, 25, .12); }
+    }
+
+    .top { height: 14px; background: var(--ink); border-bottom: 5px solid var(--red); padding-top: env(safe-area-inset-top); box-sizing: content-box; }
+
+    main { flex: 1; padding: 22px 22px 28px; text-align: center; }
+
+    .logo { display: block; width: 132px; height: 132px; margin: 0 auto 10px; object-fit: contain; }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 9.5vw, 44px);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -.01em;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+    }
+
+    .subtitle { margin: 8px 0 16px; font-size: 18px; color: var(--muted); }
+    .subtitle span + span::before { content: "·"; margin: 0 .7em; }
+
+    .price {
+      display: inline-block;
+      max-width: 100%;
+      padding: .32em 1em;
+      border-radius: 999px;
+      background: var(--red);
+      color: #fff;
+      font-size: clamp(28px, 9vw, 40px);
+      font-weight: 900;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .specs { display: grid; gap: 9px; margin: 24px 0 0; padding: 0; text-align: left; }
+
+    .spec {
+      position: relative;
+      margin: 0;
+      padding: 10px 14px 11px 18px;
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .spec::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 9px; bottom: 9px;
+      width: 4px;
+      background: var(--red);
+    }
+
+    .spec dt, .notes h2 {
+      margin: 0;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .spec dd { margin: 3px 0 0; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+
+    .notes { margin-top: 20px; text-align: left; }
+    .notes p { margin: 6px 0 0; font-size: 16px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    /* Sello de vendido, igual que en la ficha impresa. */
+    .sold .price { background: var(--muted); }
+    .stamp {
+      display: none;
+      width: fit-content;
+      margin: 18px auto -4px;
+      padding: .12em .5em;
+      border: 5px solid var(--red);
+      border-radius: 10px;
+      color: var(--red);
+      font-size: clamp(34px, 11vw, 52px);
+      font-weight: 900;
+      line-height: 1.1;
+      transform: rotate(-6deg);
+    }
+    .sold .stamp { display: block; }
+
+    footer {
+      padding: 15px 16px calc(15px + env(safe-area-inset-bottom));
+      border-top: 4px solid var(--red);
+      background: var(--ink);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .03em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    footer span + span::before { content: "·"; margin: 0 .7em; }
+
+    /* Estados: cargando, no encontrado, sin conexión. */
+    .state { padding: 28px 6px 40px; }
+    .state h1 { font-size: 26px; text-transform: none; }
+    .state p { margin: 10px 0 0; font-size: 16px; line-height: 1.45; color: var(--muted); }
+    .state button {
+      margin-top: 18px;
+      padding: 12px 26px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--red);
+      color: #fff;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .spinner {
+      width: 34px; height: 34px;
+      margin: 0 auto 16px;
+      border: 4px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="top"></div>
+
+    <main>
+      <img class="logo" src="logo.png" alt="Rangel Venta de Autos" width="132" height="132">
+
+      <div id="loading" class="state" role="status">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Cargando los datos del vehículo…</p>
+      </div>
+
+      <div id="message" class="state" hidden>
+        <h1 id="message-title"></h1>
+        <p id="message-text"></p>
+        <button id="retry" type="button" hidden>Reintentar</button>
+      </div>
+
+      <article id="vehicle" hidden>
+        <h1 id="title"></h1>
+        <p class="subtitle"><span id="year"></span><span id="distance"></span></p>
+        <div class="price" id="price"></div>
+        <div class="stamp" aria-label="Este vehículo ya se vendió">VENDIDO</div>
+
+        <dl class="specs">
+          <div class="spec"><dt id="distance-label">Kilometraje</dt><dd id="spec-distance"></dd></div>
+          <div class="spec"><dt>Procedencia</dt><dd id="spec-origin"></dd></div>
+          <div class="spec"><dt>Motor</dt><dd id="spec-engine"></dd></div>
+          <div class="spec"><dt>Configuración</dt><dd id="spec-config"></dd></div>
+        </dl>
+
+        <section class="notes" id="notes" hidden>
+          <h2>Observaciones</h2>
+          <p id="notes-text"></p>
+        </section>
+      </article>
+    </main>
+
+    <footer><span>Rangel Venta de Autos</span><span>Pénjamo, Gto.</span></footer>
+  </div>
+
+  <!-- supabaseUrl y anonKey. En GitHub Pages lo genera el workflow; ver config.example.js. -->
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var $ = function (id) { return document.getElementById(id); };
+      var config = window.FICHA_CONFIG || {};
+      var code = new URLSearchParams(location.search).get("a") || "";
+      var number = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });
+
+      function show(id) {
+        ["loading", "message", "vehicle"].forEach(function (name) { $(name).hidden = name !== id; });
+      }
+
+      function showMessage(title, text, canRetry) {
+        $("message-title").textContent = title;
+        $("message-text").textContent = text;
+        $("retry").hidden = !canRetry;
+        show("message");
+      }
+
+      function render(v) {
+        var unit = v.unidad_distancia === "mi" ? "mi" : "km";
+        var distance = number.format(v.kilometraje) + " " + unit;
+        var title = (v.marca + " " + v.modelo).trim();
+
+        document.title = title + " " + v.anio + " · Rangel Venta de Autos";
+        $("title").textContent = title;
+        $("year").textContent = v.anio;
+        $("distance").textContent = distance;
+        $("price").textContent = "$" + number.format(v.precio) + " MXN";
+        $("distance-label").textContent = unit === "mi" ? "Millaje" : "Kilometraje";
+        $("spec-distance").textContent = distance;
+        $("spec-origin").textContent = v.procedencia;
+        $("spec-engine").textContent = v.motor_litros;
+        $("spec-config").textContent = v.configuracion_motor;
+
+        var notes = (v.observaciones || "").trim();
+        $("notes").hidden = notes.length === 0;
+        $("notes-text").textContent = notes;
+
+        $("vehicle").classList.toggle("sold", v.vendido === true);
+        show("vehicle");
+      }
+
+      function load() {
+        if (!/^[A-Za-z0-9]{12,40}$/.test(code)) {
+          showMessage("Vehículo no encontrado", "Escanea de nuevo el código QR del vehículo.", false);
+          return;
+        }
+
+        if (!config.supabaseUrl || !config.anonKey) {
+          showMessage("Ficha no disponible", "Falta la configuración de la página.", false);
+          return;
+        }
+
+        show("loading");
+        fetch(config.supabaseUrl.replace(/\/+$/, "") + "/rest/v1/rpc/ficha_publica", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": config.anonKey,
+            "Authorization": "Bearer " + config.anonKey
+          },
+          body: JSON.stringify({ p_codigo: code })
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error("HTTP " + response.status);
+            return response.json();
+          })
+          .then(function (rows) {
+            if (!Array.isArray(rows) || rows.length === 0) {
+              showMessage("Vehículo no disponible",
+                "Este vehículo ya no está en nuestro inventario. Pregunta en la agencia por otras opciones.", false);
+              return;
+            }
+            render(rows[0]);
+          })
+          .catch(function () {
+            showMessage("No se pudo cargar la ficha",
+              "Revisa tu conexión a internet e inténtalo de nuevo.", true);
+          });
+      }
+
+      $("retry").addEventListener("click", load);
+      load();
+    })();
+  </script>
+</body>
+</html>

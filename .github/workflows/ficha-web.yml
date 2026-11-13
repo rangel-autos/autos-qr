@@ -1,0 +1,54 @@
+name: Publicar ficha web
+
+# Publica la carpeta web/ en GitHub Pages: es la página que se abre al escanear el QR de un auto.
+# Se lanza al cambiar web/ en main o a mano (pestaña Actions → Publicar ficha web → Run workflow).
+#
+# Requiere, una sola vez:
+#   - Settings → Pages → Source: "GitHub Actions".
+#   - Los secrets SUPABASE_URL y SUPABASE_ANON_KEY (los mismos de "Build macOS").
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/ficha-web.yml']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Crear config.js desde los secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Faltan los secrets SUPABASE_URL y/o SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          jq -n --arg url "$SUPABASE_URL" --arg key "$SUPABASE_ANON_KEY" \
+            '{supabaseUrl: $url, anonKey: $key}' | sed '1s/^/window.FICHA_CONFIG = /; $s/$/;/' > web/config.js
+          rm -f web/config.example.js
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

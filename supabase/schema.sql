@@ -12,13 +12,17 @@
 
 create table if not exists public.vehiculos (
   id                  bigint generated always as identity primary key,
+  -- Código aleatorio que va en el QR y abre la ficha pública (no se usa el id para que no sea adivinable).
+  codigo              text not null unique default substr(replace(gen_random_uuid()::text, '-', ''), 1, 16)
+                        check (codigo ~ '^[A-Za-z0-9]{12,40}$'),
   marca               text not null,
   modelo              text not null,
   anio                int not null,
   kilometraje         bigint not null,
+  unidad_distancia    text not null default 'km' check (unidad_distancia in ('km', 'mi')),
   precio              numeric(12,2) not null,
   procedencia         text not null check (procedencia in
-                        ('Nacional', 'Americano regularizado', 'Americano no regularizado')),
+                        ('Nacional', 'Americano legalizado', 'Americano no legalizado')),
   motor_litros        text not null,
   configuracion_motor text not null,
   observaciones       text not null default '',
@@ -57,3 +61,25 @@ create policy "solo usuarios autenticados" on public.vehiculos
 grant select, insert, update, delete on public.vehiculos to authenticated;
 grant usage, select on sequence public.vehiculos_id_seq to authenticated;
 revoke all on public.vehiculos from anon;
+
+-- Ficha pública: lo único que puede leer quien escanea un QR (rol anon, sin iniciar sesión).
+-- Devuelve un solo auto y solo si se conoce su código; la tabla sigue cerrada para anon.
+create or replace function public.ficha_publica(p_codigo text)
+returns table (
+  marca text, modelo text, anio int, kilometraje bigint, unidad_distancia text, precio numeric,
+  procedencia text, motor_litros text, configuracion_motor text, observaciones text, vendido boolean
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select v.marca, v.modelo, v.anio, v.kilometraje, v.unidad_distancia, v.precio,
+         v.procedencia, v.motor_litros, v.configuracion_motor, v.observaciones, v.vendido
+  from public.vehiculos v
+  where v.codigo = p_codigo
+  limit 1;
+$$;
+
+revoke all on function public.ficha_publica(text) from public;
+grant execute on function public.ficha_publica(text) to anon, authenticated;

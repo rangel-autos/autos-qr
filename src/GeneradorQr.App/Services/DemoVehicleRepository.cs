@@ -18,11 +18,11 @@ internal sealed class DemoVehicleRepository : IVehicleRepository
     public DemoVehicleRepository()
     {
         Add(new VehicleRecord { Marca = "Ford", Modelo = "Lobo Lariat", Anio = 2020, Kilometraje = 45000, Precio = 495000m,
-            Procedencia = "Americano regularizado", MotorLitros = "5.0 L", ConfiguracionMotor = "V8", Observaciones = "Único dueño" });
+            Procedencia = "Americano legalizado", MotorLitros = "5.0 L", ConfiguracionMotor = "V8", Observaciones = "Único dueño" });
         Add(new VehicleRecord { Marca = "Nissan", Modelo = "Versa", Anio = 2021, Kilometraje = 18000, Precio = 255000m,
             Procedencia = "Nacional", MotorLitros = "1.6 L", ConfiguracionMotor = "4 cilindros" });
-        Add(new VehicleRecord { Marca = "Chevrolet", Modelo = "Silverado", Anio = 2018, Kilometraje = 98000, Precio = 420000m,
-            Procedencia = "Americano no regularizado", MotorLitros = "5.3 L", ConfiguracionMotor = "V8", Vendido = true });
+        Add(new VehicleRecord { Marca = "Chevrolet", Modelo = "Silverado", Anio = 2018, Kilometraje = 61000, UnidadDistancia = "mi", Precio = 420000m,
+            Procedencia = "Americano no legalizado", MotorLitros = "5.3 L", ConfiguracionMotor = "V8", Vendido = true });
     }
 
     public Task<IReadOnlyList<VehicleRecord>> GetAllAsync(CancellationToken ct)
@@ -80,6 +80,7 @@ internal sealed class DemoVehicleRepository : IVehicleRepository
         var copy = v.Clone();
         copy.Id = _nextId++;
         copy.Version = 1;
+        if (copy.Codigo.Length == 0) copy.Codigo = VehicleRecord.NuevoCodigo();
         copy.CreadoEn = copy.CreadoEn == default ? DateTime.Now : copy.CreadoEn;
         _rows.Add(copy);
         return copy;

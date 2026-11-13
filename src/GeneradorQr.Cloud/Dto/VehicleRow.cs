@@ -6,10 +6,12 @@ namespace GeneradorQr.Cloud.Dto;
 /// <summary>Fila tal como la devuelve PostgREST (snake_case).</summary>
 internal sealed record VehicleRow(
     [property: JsonPropertyName("id")] long Id,
+    [property: JsonPropertyName("codigo")] string? Codigo,
     [property: JsonPropertyName("marca")] string Marca,
     [property: JsonPropertyName("modelo")] string Modelo,
     [property: JsonPropertyName("anio")] int Anio,
     [property: JsonPropertyName("kilometraje")] long Kilometraje,
+    [property: JsonPropertyName("unidad_distancia")] string? UnidadDistancia,
     [property: JsonPropertyName("precio")] decimal Precio,
     [property: JsonPropertyName("procedencia")] string Procedencia,
     [property: JsonPropertyName("motor_litros")] string MotorLitros,
@@ -23,10 +25,12 @@ internal sealed record VehicleRow(
     public VehicleRecord ToRecord() => new()
     {
         Id = Id,
+        Codigo = Codigo ?? string.Empty,
         Marca = Marca,
         Modelo = Modelo,
         Anio = Anio,
         Kilometraje = Kilometraje,
+        UnidadDistancia = Core.Models.UnidadDistancia.Normalize(UnidadDistancia),
         Precio = Precio,
         Procedencia = Procedencia,
         MotorLitros = MotorLitros,
@@ -44,10 +48,12 @@ internal sealed record VehicleRow(
 /// (excepto <see cref="CreadoEn"/> al migrar datos existentes).
 /// </summary>
 internal sealed record VehicleWrite(
+    [property: JsonPropertyName("codigo"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Codigo,
     [property: JsonPropertyName("marca")] string Marca,
     [property: JsonPropertyName("modelo")] string Modelo,
     [property: JsonPropertyName("anio")] int Anio,
     [property: JsonPropertyName("kilometraje")] long Kilometraje,
+    [property: JsonPropertyName("unidad_distancia")] string UnidadDistancia,
     [property: JsonPropertyName("precio")] decimal Precio,
     [property: JsonPropertyName("procedencia")] string Procedencia,
     [property: JsonPropertyName("motor_litros")] string MotorLitros,
@@ -57,7 +63,9 @@ internal sealed record VehicleWrite(
     [property: JsonPropertyName("creado_en"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DateTimeOffset? CreadoEn)
 {
     public static VehicleWrite From(VehicleRecord v, bool includeCreatedAt = false) => new(
-        v.Marca, v.Modelo, v.Anio, v.Kilometraje, v.Precio, v.Procedencia, v.MotorLitros, v.ConfiguracionMotor,
+        // Sin código, el servidor genera uno (valor por defecto de la columna).
+        string.IsNullOrWhiteSpace(v.Codigo) ? null : v.Codigo,
+        v.Marca, v.Modelo, v.Anio, v.Kilometraje, Core.Models.UnidadDistancia.Normalize(v.UnidadDistancia), v.Precio, v.Procedencia, v.MotorLitros, v.ConfiguracionMotor,
         v.Observaciones, v.Vendido,
         // Una fecha sin zona (Unspecified) se interpreta como hora local, que es como la guardaba la app WinForms.
         includeCreatedAt ? new DateTimeOffset(v.CreadoEn) : null);

@@ -29,7 +29,7 @@ public class SheetRendererTests
         using var logo = BrandAssets.LoadLogo();
         using var qr = QrRenderer.Render(VehicleText.BuildPayload(v), logo: logo);
 
-        var png = SheetRenderer.RenderPng(v, qr, logo);
+        var png = SheetRenderer.RenderPng(qr, logo);
 
         using var bmp = SKBitmap.Decode(png);
         Assert.Equal(1700, bmp.Width);
@@ -44,7 +44,7 @@ public class SheetRendererTests
         using var logo = BrandAssets.LoadLogo();
         using var qr = QrRenderer.Render(payload, logo: logo);
 
-        var png = SheetRenderer.RenderPng(v, qr, logo);
+        var png = SheetRenderer.RenderPng(qr, logo);
 
         Assert.Equal(payload, QrDecode.DecodePng(png));
     }
@@ -55,7 +55,7 @@ public class SheetRendererTests
         var v = Sample();
         using var qr = QrRenderer.Render(VehicleText.BuildPayload(v));
 
-        var pdf = SheetRenderer.RenderPdf(v, qr, logo: null);
+        var pdf = SheetRenderer.RenderPdf(qr, logo: null);
 
         Assert.Equal("%PDF", Encoding.ASCII.GetString(pdf, 0, 4));
     }
@@ -67,7 +67,7 @@ public class SheetRendererTests
         using var logo = BrandAssets.LoadLogo();
         using var qr = QrRenderer.Render(VehicleText.BuildPayload(v), logo: logo);
 
-        var pdf = SheetRenderer.RenderPdf(v, qr, logo);
+        var pdf = SheetRenderer.RenderPdf(qr, logo);
 
         Assert.True(pdf.Length < 1_000_000, $"El PDF pesa {pdf.Length:N0} bytes");
     }
@@ -80,8 +80,8 @@ public class SheetRendererTests
         using var logo = BrandAssets.LoadLogo();
         using var qr = QrRenderer.Render(VehicleText.BuildPayload(v), logo: logo);
 
-        var pdf = SheetRenderer.RenderPdf(v, qr, logo);
-        var png = SheetRenderer.RenderPng(v, qr, logo);
+        var pdf = SheetRenderer.RenderPdf(qr, logo);
+        var png = SheetRenderer.RenderPng(qr, logo);
 
         Assert.True(pdf.Length > 1000);
         Assert.True(png.Length > 1000);

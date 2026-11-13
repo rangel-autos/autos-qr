@@ -146,8 +146,14 @@
                 <TextBlock Classes="error" Text="{Binding Form.ErrorAnio}" IsVisible="{Binding Form.ErrorAnio, Converter={x:Static ObjectConverters.IsNotNull}}" />
               </StackPanel>
               <StackPanel Grid.Column="1">
-                <TextBlock Classes="label" Text="Kilometraje" />
-                <NumericUpDown Value="{Binding Form.Kilometraje}" Minimum="0" Maximum="2000000" FormatString="N0" Increment="1000" />
+                <TextBlock Classes="label" Text="{Binding Form.EtiquetaRecorrido}" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                  <NumericUpDown Value="{Binding Form.Kilometraje}" Minimum="0" Maximum="2000000" FormatString="N0" Increment="1000"
+                                 ShowButtonSpinner="False" />
+                  <ComboBox Grid.Column="1" ItemsSource="{x:Static models:UnidadDistancia.Todas}"
+                            SelectedItem="{Binding Form.UnidadDistancia}" MinWidth="68" VerticalAlignment="Stretch"
+                            ToolTip.Tip="Kilómetros (km) o millas (mi)" />
+                </Grid>
               </StackPanel>
             </Grid>
 
@@ -216,7 +222,7 @@
             <DataGrid.Columns>
               <DataGridTextColumn Header="Vehículo" Binding="{Binding Titulo}" Width="1.6*" MinWidth="140" x:DataType="models:VehicleRecord" />
               <DataGridTextColumn Header="Año" Binding="{Binding Anio}" Width="74" x:DataType="models:VehicleRecord" />
-              <DataGridTextColumn Header="Kilometraje" Binding="{Binding Kilometraje, StringFormat='{}{0:N0} km'}" Width="112" x:DataType="models:VehicleRecord" />
+              <DataGridTextColumn Header="Km / Millas" Binding="{Binding Recorrido}" SortMemberPath="Kilometraje" Width="112" x:DataType="models:VehicleRecord" />
               <DataGridTextColumn Header="Precio" Binding="{Binding Precio, StringFormat='{}{0:C0}'}" Width="112" x:DataType="models:VehicleRecord" />
               <DataGridTextColumn Header="Procedencia" Binding="{Binding Procedencia}" Width="1.5*" x:DataType="models:VehicleRecord" />
               <DataGridTextColumn Header="Motor" Binding="{Binding Motor}" Width="1.1*" x:DataType="models:VehicleRecord" />

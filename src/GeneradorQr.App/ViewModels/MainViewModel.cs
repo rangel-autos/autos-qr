@@ -384,7 +384,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
         }
 
-        using var qr = QrRenderer.Render(VehicleText.BuildPayload(vehicle), pixelsPerModule: 8, logo: _logo);
+        using var qr = QrRenderer.Render(VehicleText.BuildQrContent(vehicle), pixelsPerModule: 8, logo: _logo);
         PreviewPng = QrRenderer.EncodePng(qr);
     }
 

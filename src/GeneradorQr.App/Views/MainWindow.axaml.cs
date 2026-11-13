@@ -174,7 +174,15 @@ public partial class MainWindow : Window
         try
         {
             await action(vehicle);
-            if (done.Length > 0) vm.Notify(done);
+            if (vehicle.Id == 0)
+            {
+                // El QR abre la ficha en línea, que no existe hasta que el auto se guarda.
+                vm.Notify("Recuerda guardar el vehículo: el QR no mostrará la ficha hasta que lo guardes.", isError: true);
+            }
+            else if (done.Length > 0)
+            {
+                vm.Notify(done);
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException
                                        or System.ComponentModel.Win32Exception)
@@ -187,7 +195,7 @@ public partial class MainWindow : Window
     private Task ExportSavedAsync(Func<VehicleRecord, Task<string?>> save) => ExportAsync(async v =>
     {
         var path = await save(v);
-        if (path is not null) Vm?.Notify($"Guardado en {path}");
+        if (path is not null && v.Id != 0) Vm?.Notify($"Guardado en {path}");
     }, done: string.Empty);
 
     private async void OnClosing(object? sender, WindowClosingEventArgs e)

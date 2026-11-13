@@ -38,11 +38,24 @@ public class VehicleValidatorTests
         Assert.Equal("Lobo", record.Modelo);
         Assert.Equal(2020, record.Anio);
         Assert.Equal(45000, record.Kilometraje);
+        Assert.Equal("km", record.UnidadDistancia);
         Assert.Equal(495000m, record.Precio);
         Assert.Equal("Nacional", record.Procedencia);
         Assert.Equal("5.0 L", record.MotorLitros);
         Assert.Equal("V8", record.ConfiguracionMotor);
         Assert.Equal("Único dueño", record.Observaciones);
+    }
+
+    [Fact]
+    public void Validate_EnMillas_ConservaUnidad()
+    {
+        var input = new VehicleInput("Ford", "Lobo", 2020, 45000, "100", "Americano legalizado", "5.0 L", "V8", "", "mi");
+
+        VehicleValidator.Validate(input, out var record);
+
+        Assert.Equal("mi", record!.UnidadDistancia);
+        Assert.Equal("45,000 mi", record.Recorrido);
+        Assert.Equal("Millaje", record.EtiquetaRecorrido);
     }
 
     [Theory]

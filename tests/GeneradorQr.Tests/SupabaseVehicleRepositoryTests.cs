@@ -10,7 +10,7 @@ namespace GeneradorQr.Tests;
 public class SupabaseVehicleRepositoryTests
 {
     private const string Row = """
-        {"id":5,"marca":"Ford","modelo":"Lobo","anio":2020,"kilometraje":45000,"precio":495000.50,
+        {"id":5,"codigo":"a1b2c3d4e5f60718","marca":"Ford","modelo":"Lobo","anio":2020,"kilometraje":45000,"precio":495000.50,
          "procedencia":"Nacional","motor_litros":"5.0 L","configuracion_motor":"V8","observaciones":"",
          "vendido":false,"creado_en":"2026-11-08T20:05:00+00:00","actualizado_en":"2026-11-08T20:05:00+00:00","version":3}
         """;
@@ -50,7 +50,10 @@ public class SupabaseVehicleRepositoryTests
 
         var all = await repo.GetAllAsync(default);
 
-        Assert.Single(all);
+        // Fila sin unidad_distancia (servidor sin migrar): cuenta como km.
+        var only = Assert.Single(all);
+        Assert.Equal("km", only.UnidadDistancia);
+        Assert.Equal("a1b2c3d4e5f60718", only.Codigo);
         var req = Assert.Single(http.Requests);
         Assert.Equal(HttpMethod.Get, req.Method);
         Assert.Equal("/rest/v1/vehiculos?select=*&order=vendido.asc,id.desc", req.PathAndQuery);
@@ -102,6 +105,9 @@ public class SupabaseVehicleRepositoryTests
         Assert.DoesNotContain("\"creado_en\"", req.Body);
         Assert.DoesNotContain("\"actualizado_en\"", req.Body);
         Assert.Contains("\"precio\":495000.50", req.Body);
+        Assert.Contains("\"unidad_distancia\":\"km\"", req.Body);
+        // Sin código en el registro no se manda la columna: el servidor genera uno.
+        Assert.DoesNotContain("\"codigo\"", req.Body);
     }
 
     [Fact]

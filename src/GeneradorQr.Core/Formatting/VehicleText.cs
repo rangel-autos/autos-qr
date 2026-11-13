@@ -13,7 +13,17 @@ public static class VehicleText
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     /// <summary>
-    /// Texto que va dentro del QR. Debe ser idéntico al de la versión WinForms.
+    /// Lo que va dentro del QR: el enlace a la ficha pública del auto (https://…/?a=codigo).
+    /// Un auto sin código (guardado antes de que existieran las fichas en línea) lleva el texto con sus datos.
+    /// </summary>
+    public static string BuildQrContent(VehicleRecord vehicle) =>
+        string.IsNullOrWhiteSpace(vehicle.Codigo)
+            ? BuildPayload(vehicle)
+            : $"{Brand.FichaUrl}?a={Uri.EscapeDataString(vehicle.Codigo)}";
+
+    /// <summary>
+    /// Datos del auto como texto (lo que llevaba el QR antes de las fichas en línea). Con kilómetros es idéntico al de la versión WinForms;
+    /// con millas la línea dice "Millaje: 45,000 mi".
     /// </summary>
     public static string BuildPayload(VehicleRecord vehicle)
     {
@@ -22,7 +32,7 @@ public static class VehicleText
         builder.AppendLine($"Marca: {vehicle.Marca}");
         builder.AppendLine($"Modelo: {vehicle.Modelo}");
         builder.AppendLine($"Año: {vehicle.Anio}");
-        builder.AppendLine($"Kilometraje: {vehicle.Kilometraje.ToString("N0", Mx)} km");
+        builder.AppendLine($"{vehicle.EtiquetaRecorrido}: {vehicle.Recorrido}");
         builder.AppendLine($"Precio: {vehicle.Precio.ToString("C2", Mx)} MXN");
         builder.AppendLine($"Procedencia: {vehicle.Procedencia}");
         builder.AppendLine($"Motor: {vehicle.MotorLitros}");

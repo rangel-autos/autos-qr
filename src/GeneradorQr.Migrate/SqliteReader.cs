@@ -61,7 +61,7 @@ public static class SqliteReader
                     Anio = reader.GetInt32(3),
                     Kilometraje = reader.GetInt64(4),
                     Precio = decimal.Parse(reader.GetString(5), NumberStyles.Number, CultureInfo.InvariantCulture),
-                    Procedencia = reader.GetString(6),
+                    Procedencia = ActualizarProcedencia(reader.GetString(6)),
                     MotorLitros = reader.GetString(7),
                     ConfiguracionMotor = reader.GetString(8),
                     Observaciones = reader.GetString(9),
@@ -74,6 +74,14 @@ public static class SqliteReader
 
         return result;
     }
+
+    /// <summary>La versión WinForms decía "regularizado"; ahora el catálogo dice "legalizado".</summary>
+    private static string ActualizarProcedencia(string procedencia) => procedencia switch
+    {
+        "Americano regularizado" => "Americano legalizado",
+        "Americano no regularizado" => "Americano no legalizado",
+        _ => procedencia
+    };
 
     /// <summary>Las fechas se guardaron con ToString("O"); sin zona se toman como hora local.</summary>
     private static DateTime? ParseDate(string text) =>

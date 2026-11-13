@@ -6,3 +6,6 @@
 .superpowers/
 supabase.json
 dist/
+
+# La ficha web toma su configuración de los secrets al publicarse
+web/config.js

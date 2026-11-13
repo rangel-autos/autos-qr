@@ -12,4 +12,5 @@ public sealed record VehicleInput(
     string Procedencia,
     string MotorLitros,
     string ConfiguracionMotor,
-    string Observaciones);
+    string Observaciones,
+    string UnidadDistancia = Models.UnidadDistancia.Km);

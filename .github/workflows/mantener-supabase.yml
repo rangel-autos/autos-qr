@@ -1,0 +1,37 @@
+name: Mantener Supabase activo
+
+# El plan gratuito de Supabase pausa el proyecto tras 7 días sin actividad, y con el proyecto
+# pausado los QR impresos dejan de mostrar la ficha. Esta consulta diaria lo mantiene despierto.
+#
+# Ojo: GitHub desactiva los workflows programados si el repositorio pasa 60 días sin cambios;
+# avisa por correo y se reactiva con un clic en la pestaña Actions.
+#
+# Requiere los secrets SUPABASE_URL y SUPABASE_ANON_KEY (los mismos de "Build macOS").
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 13 * * *'   # todos los días, 7:17 a. m. hora del centro de México
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consultar la ficha pública
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Faltan los secrets SUPABASE_URL y/o SUPABASE_ANON_KEY."
+            exit 1
+          fi
+          # Un código que no existe: la consulta llega a la base y devuelve una lista vacía.
+          curl --fail-with-body --silent --show-error --max-time 30 \
+            -X POST "${SUPABASE_URL%/}/rest/v1/rpc/ficha_publica" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"p_codigo":"mantenerdespierto0"}'

@@ -13,12 +13,15 @@ public sealed partial class VehicleFormViewModel : ObservableObject
     /// <summary>Propiedades que son datos del auto (cambian el QR y marcan el formulario como modificado).</summary>
     internal static readonly HashSet<string> FieldNames =
     [
-        nameof(Marca), nameof(Modelo), nameof(Anio), nameof(Kilometraje), nameof(PrecioTexto),
+        nameof(Marca), nameof(Modelo), nameof(Anio), nameof(Kilometraje), nameof(UnidadDistancia), nameof(PrecioTexto),
         nameof(Procedencia), nameof(MotorLitros), nameof(ConfiguracionMotor), nameof(Observaciones)
     ];
 
     private readonly TimeProvider _clock;
     private bool _loading;
+
+    /// <summary>Código para el auto nuevo que se está capturando: el QR de la vista previa ya es el definitivo.</summary>
+    private string _codigoNuevo = VehicleRecord.NuevoCodigo();
 
     public VehicleFormViewModel(TimeProvider clock)
     {
@@ -30,6 +33,11 @@ public sealed partial class VehicleFormViewModel : ObservableObject
     [ObservableProperty] private string _modelo = string.Empty;
     [ObservableProperty] private decimal? _anio;
     [ObservableProperty] private decimal? _kilometraje;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EtiquetaRecorrido))]
+    private string _unidadDistancia = Core.Models.UnidadDistancia.Km;
+
     [ObservableProperty] private string _precioTexto = string.Empty;
     [ObservableProperty] private string _procedencia = Brand.Procedencias[0];
     [ObservableProperty] private string _motorLitros = string.Empty;
@@ -56,6 +64,9 @@ public sealed partial class VehicleFormViewModel : ObservableObject
     public string? ErrorMotor => Errors.GetValueOrDefault(nameof(VehicleInput.MotorLitros));
     public string? ErrorConfiguracion => Errors.GetValueOrDefault(nameof(VehicleInput.ConfiguracionMotor));
 
+    /// <summary>"Kilometraje" o "Millaje", según la unidad elegida.</summary>
+    public string EtiquetaRecorrido => Core.Models.UnidadDistancia.Etiqueta(UnidadDistancia);
+
     public int AnioMinimo => VehicleValidator.MinYear;
     public int AnioMaximo => _clock.GetLocalNow().Year + 2;
 
@@ -75,6 +86,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
         Modelo = vehicle.Modelo;
         Anio = vehicle.Anio;
         Kilometraje = vehicle.Kilometraje;
+        UnidadDistancia = Core.Models.UnidadDistancia.Normalize(vehicle.UnidadDistancia);
         PrecioTexto = FormatPrecio(vehicle.Precio);
         Procedencia = vehicle.Procedencia;
         MotorLitros = vehicle.MotorLitros;
@@ -107,7 +119,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
     public bool TryBuild(out VehicleRecord vehicle, bool showErrors = true)
     {
         var input = new VehicleInput(Marca, Modelo, (int)(Anio ?? 0), (long)(Kilometraje ?? 0), PrecioTexto,
-            Procedencia, MotorLitros, ConfiguracionMotor, Observaciones);
+            Procedencia, MotorLitros, ConfiguracionMotor, Observaciones, UnidadDistancia);
         var errors = VehicleValidator.Validate(input, out var record, AnioMaximo);
 
         if (showErrors)
@@ -122,6 +134,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
         }
 
         record.Id = Editing?.Id ?? 0;
+        record.Codigo = Editing is null ? _codigoNuevo : Editing.Codigo;
         record.Version = Editing?.Version ?? 0;
         record.Vendido = Editing?.Vendido ?? false;
         record.CreadoEn = Editing?.CreadoEn ?? _clock.GetLocalNow().DateTime;
@@ -154,6 +167,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
         Modelo = string.Empty;
         Anio = _clock.GetLocalNow().Year;
         Kilometraje = 0;
+        UnidadDistancia = Core.Models.UnidadDistancia.Km;
         PrecioTexto = string.Empty;
         Procedencia = Brand.Procedencias[0];
         MotorLitros = string.Empty;
@@ -161,6 +175,7 @@ public sealed partial class VehicleFormViewModel : ObservableObject
         Observaciones = string.Empty;
         _loading = false;
 
+        _codigoNuevo = VehicleRecord.NuevoCodigo();
         Editing = null;
         Errors = new Dictionary<string, string>();
         IsDirty = false;

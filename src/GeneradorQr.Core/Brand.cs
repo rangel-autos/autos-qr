@@ -10,6 +10,12 @@ public static class Brand
     public const string Nombre = "Rangel Venta de Autos";
     public const string Ubicacion = "Pénjamo, Gto.";
 
+    /// <summary>
+    /// Página pública (GitHub Pages, carpeta web/) que muestra la ficha del auto al escanear el QR.
+    /// El QR lleva esta dirección más el código del auto: https://…/?a=codigo
+    /// </summary>
+    public const string FichaUrl = "https://adrianoblea850.github.io/autos-qr/";
+
     public static readonly SKColor Red = new(214, 24, 31);
     public static readonly SKColor RedDark = new(172, 15, 21);
     public static readonly SKColor RedPressed = new(140, 10, 16);
@@ -25,7 +31,7 @@ public static class Brand
     public static readonly SKColor WarningTint = new(254, 243, 219);
 
     public static readonly IReadOnlyList<string> Procedencias =
-        ["Nacional", "Americano regularizado", "Americano no regularizado"];
+        ["Nacional", "Americano legalizado", "Americano no legalizado"];
 
     public static readonly IReadOnlyList<string> MarcasComunes =
     [
