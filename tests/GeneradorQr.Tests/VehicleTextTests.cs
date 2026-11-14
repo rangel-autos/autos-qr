@@ -58,7 +58,7 @@ public class VehicleTextTests
         var vehicle = Sample();
         vehicle.Codigo = "a1b2c3d4e5f60718";
 
-        Assert.Equal("https://adrianoblea850.github.io/autos-qr/?a=a1b2c3d4e5f60718", VehicleText.BuildQrContent(vehicle));
+        Assert.Equal("https://rangelautos.github.io/?a=a1b2c3d4e5f60718", VehicleText.BuildQrContent(vehicle));
     }
 
     [Fact]
