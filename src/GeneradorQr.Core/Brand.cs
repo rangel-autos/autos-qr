@@ -14,7 +14,7 @@ public static class Brand
     /// Página pública (GitHub Pages, carpeta web/) que muestra la ficha del auto al escanear el QR.
     /// El QR lleva esta dirección más el código del auto: https://…/?a=codigo
     /// </summary>
-    public const string FichaUrl = "https://rangelautos.github.io/";
+    public const string FichaUrl = "https://rangel-autos.github.io/";
 
     public static readonly SKColor Red = new(214, 24, 31);
     public static readonly SKColor RedDark = new(172, 15, 21);
