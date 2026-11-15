@@ -50,6 +50,36 @@ public class SheetRendererTests
     }
 
     [Fact]
+    public void Png_ConQrSinInternet_LosDosCodigosDecodifican()
+    {
+        var v = Sample();
+        v.Codigo = "a1b2c3d4e5f60718";
+        var enlace = VehicleText.BuildQrContent(v);
+        var texto = VehicleText.BuildOfflineQrContent(v)!;
+        using var logo = BrandAssets.LoadLogo();
+        using var qr = QrRenderer.Render(enlace, logo: logo);
+        using var offlineQr = QrRenderer.Render(texto);
+
+        var png = SheetRenderer.RenderPng(qr, logo, offlineQr: offlineQr);
+
+        // La franja "sin internet" ocupa la parte baja de la hoja; el QR principal queda arriba de ella.
+        using var sheet = SKBitmap.Decode(png);
+        const int corte = 1680;
+        using var arriba = new SKBitmap();
+        using var abajo = new SKBitmap();
+        Assert.True(sheet.ExtractSubset(arriba, SKRectI.Create(0, 0, sheet.Width, corte)));
+        Assert.True(sheet.ExtractSubset(abajo, SKRectI.Create(0, corte, sheet.Width, sheet.Height - corte)));
+        Assert.Equal(enlace, QrDecode.Decode(arriba));
+        Assert.Equal(texto, QrDecode.Decode(abajo));
+    }
+
+    [Fact]
+    public void OfflineQrContent_SinCodigo_NoHaySegundoQr()
+    {
+        Assert.Null(VehicleText.BuildOfflineQrContent(Sample()));
+    }
+
+    [Fact]
     public void Pdf_EmpiezaConFirmaPdf()
     {
         var v = Sample();

@@ -22,6 +22,16 @@ public static class VehicleText
             : $"{Brand.FichaUrl}?a={Uri.EscapeDataString(vehicle.Codigo)}";
 
     /// <summary>
+    /// Lo que va en el segundo QR de la ficha impresa ("¿Sin internet?"): los datos del auto como texto,
+    /// que el celular muestra sin conexión. Es <c>null</c> cuando el QR principal ya lleva ese texto (auto sin código).
+    /// </summary>
+    public static string? BuildOfflineQrContent(VehicleRecord vehicle) =>
+        string.IsNullOrWhiteSpace(vehicle.Codigo)
+            ? null
+            // Saltos "\n" fijos para que el QR sea el mismo en Windows y en macOS.
+            : BuildPayload(vehicle).ReplaceLineEndings("\n");
+
+    /// <summary>
     /// Datos del auto como texto (lo que llevaba el QR antes de las fichas en línea). Con kilómetros es idéntico al de la versión WinForms;
     /// con millas la línea dice "Millaje: 45,000 mi".
     /// </summary>

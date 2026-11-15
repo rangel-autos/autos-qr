@@ -94,7 +94,13 @@ public sealed class FileActions(Action<string> launcher, string tempDir) : IFile
     {
         using var logo = BrandAssets.LoadLogo();
         using var qr = QrRenderer.Render(VehicleText.BuildQrContent(vehicle), pixelsPerModule: 10, logo: logo);
-        return pdf ? SheetRenderer.RenderPdf(qr, logo) : SheetRenderer.RenderPng(qr, logo);
+
+        // Segundo QR, sin logotipo para que quede menos denso: los datos como texto para celulares sin internet.
+        var offlineText = VehicleText.BuildOfflineQrContent(vehicle);
+        using var offlineQr = offlineText is null ? null : QrRenderer.Render(offlineText, pixelsPerModule: 10);
+        return pdf
+            ? SheetRenderer.RenderPdf(qr, logo, offlineQr)
+            : SheetRenderer.RenderPng(qr, logo, offlineQr: offlineQr);
     }
 
     private static async Task<string?> SaveAsync(Window owner, string suggestedName, Func<byte[]> render)

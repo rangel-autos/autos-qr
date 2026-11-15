@@ -4,8 +4,9 @@ using SkiaSharp;
 namespace GeneradorQr.Core.Rendering;
 
 /// <summary>
-/// Ficha imprimible tamaño carta con el logotipo, la leyenda "ESCANÉAME" y el QR.
-/// No lleva datos del auto: todo se lee al escanear el código.
+/// Ficha imprimible tamaño carta con el logotipo, la leyenda "ESCANÉAME" y el QR de la ficha en línea.
+/// Opcionalmente lleva abajo un segundo QR más chico con los datos como texto, para celulares sin internet.
+/// No lleva datos del auto impresos: todo se lee al escanear los códigos.
 /// Las medidas son relativas al ancho de la página (u = ancho / 100), igual que en la versión WinForms.
 /// </summary>
 public static class SheetRenderer
@@ -13,7 +14,7 @@ public static class SheetRenderer
     private const float LetterWidthPt = 612;
     private const float LetterHeightPt = 792;
 
-    public static byte[] RenderPng(SKBitmap qr, SKBitmap? logo, int dpi = 200)
+    public static byte[] RenderPng(SKBitmap qr, SKBitmap? logo, int dpi = 200, SKBitmap? offlineQr = null)
     {
         var width = (int)(8.5 * dpi);
         var height = 11 * dpi;
@@ -21,7 +22,7 @@ public static class SheetRenderer
         using var surface = SKSurface.Create(info);
         var canvas = surface.Canvas;
         canvas.Clear(SKColors.White);
-        Draw(canvas, SKRect.Create(0, 0, width, height), qr, logo);
+        Draw(canvas, SKRect.Create(0, 0, width, height), qr, logo, offlineQr);
         canvas.Flush();
 
         using var image = surface.Snapshot();
@@ -29,7 +30,7 @@ public static class SheetRenderer
         return data.ToArray();
     }
 
-    public static byte[] RenderPdf(SKBitmap qr, SKBitmap? logo)
+    public static byte[] RenderPdf(SKBitmap qr, SKBitmap? logo, SKBitmap? offlineQr = null)
     {
         // El logo original es muy grande para un PDF que se manda por WhatsApp; ~300 dpi a su tamaño impreso basta.
         using var pdfLogo = logo is null ? null : Downscale(logo, 500);
@@ -40,7 +41,7 @@ public static class SheetRenderer
         {
             var canvas = document.BeginPage(LetterWidthPt, LetterHeightPt);
             canvas.Clear(SKColors.White);
-            Draw(canvas, SKRect.Create(0, 0, LetterWidthPt, LetterHeightPt), qr, logo);
+            Draw(canvas, SKRect.Create(0, 0, LetterWidthPt, LetterHeightPt), qr, logo, offlineQr);
             document.EndPage();
             document.Close();
         }
@@ -59,7 +60,7 @@ public static class SheetRenderer
         return source.Resize(info, SKFilterQuality.High) ?? source.Copy();
     }
 
-    private static void Draw(SKCanvas g, SKRect page, SKBitmap qr, SKBitmap? logo)
+    private static void Draw(SKCanvas g, SKRect page, SKBitmap qr, SKBitmap? logo, SKBitmap? offlineQr)
     {
         var mx = VehicleText.Mx;
         var u = page.Width / 100f;
@@ -88,6 +89,19 @@ public static class SheetRenderer
         var footerHeight = 6.5f * u;
         var footerTop = page.Bottom - footerHeight;
         var bottom = footerTop - 3 * u;
+
+        // Franja "sin internet": QR chico con los datos como texto, abajo y separado del principal
+        // para que la cámara no confunda los dos códigos.
+        if (offlineQr is not null)
+        {
+            var offlineSize = 19 * u;
+            var offlineTop = bottom - offlineSize;
+            DrawOffline(g, page, u, offlineQr, SKRect.Create(page.Left + 14 * u, offlineTop, offlineSize, offlineSize));
+            bottom = offlineTop - 6 * u;
+
+            using var divider = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 0.25f * u, Color = Brand.Border };
+            g.DrawLine(page.Left + 7 * u, offlineTop - 3 * u, page.Right - 7 * u, offlineTop - 3 * u, divider);
+        }
 
         // Bloque central: "ESCANÉAME" en píldora roja, el QR y la leyenda, centrado en el espacio libre.
         const string headline = "ESCANÉAME";
@@ -135,5 +149,27 @@ public static class SheetRenderer
         var footerSize = 2.6f * u;
         var footerTextTop = footerTop + 0.6f * u + (footerHeight - 0.6f * u - SheetText.LineHeight(SheetText.Bold, footerSize)) / 2;
         SheetText.DrawCentered(g, footer, page.MidX, footerTextTop, SheetText.Bold, footerSize, SKColors.White);
+    }
+
+    private static void DrawOffline(SKCanvas g, SKRect page, float u, SKBitmap offlineQr, SKRect qrRect)
+    {
+        using (var qrPaint = new SKPaint { IsAntialias = false, FilterQuality = SKFilterQuality.None })
+        {
+            g.DrawBitmap(offlineQr, qrRect, qrPaint);
+        }
+
+        var textLeft = qrRect.Right + 5 * u;
+        var textWidth = page.Right - 10 * u - textLeft;
+        const string title = "¿SIN INTERNET?";
+        var titleSize = SheetText.Fit(title, SheetText.Black, 5.2f * u, textWidth);
+        var titleHeight = SheetText.LineHeight(SheetText.Black, titleSize);
+        var lineSize = 2.9f * u;
+        var lineStep = 4.2f * u;
+        var textTop = qrRect.MidY - (titleHeight + 1.5f * u + 2 * lineStep) / 2;
+
+        SheetText.Draw(g, title, textLeft, textTop, SheetText.Black, titleSize, Brand.Red);
+        textTop += titleHeight + 1.5f * u;
+        SheetText.Draw(g, "Escanea este código: muestra los datos", textLeft, textTop, SheetText.Bold, lineSize, Brand.Ink);
+        SheetText.Draw(g, "del vehículo sin necesidad de conexión.", textLeft, textTop + lineStep, SheetText.Regular, lineSize, Brand.Muted);
     }
 }
