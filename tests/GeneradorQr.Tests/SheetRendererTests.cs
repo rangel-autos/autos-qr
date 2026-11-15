@@ -74,6 +74,20 @@ public class SheetRendererTests
     }
 
     [Fact]
+    public void OfflineQrContent_LlevaLosDatosYLosTelefonos()
+    {
+        var v = Sample();
+        v.Codigo = "a1b2c3d4e5f60718";
+
+        Assert.Equal(
+            "RANGEL VENTA DE AUTOS - Pénjamo, Gto.\nMarca: Ford\nModelo: Lobo\nAño: 2020\nKilometraje: 45,000 km\n" +
+            "Precio: $495,000.00 MXN\nProcedencia: Nacional\nMotor: 5.0 L\nConfiguración del motor: V8\n" +
+            "Observaciones: Único dueño\nGenerado: 08/11/2026 14:05\n" +
+            "Números de contacto:\nTel: 469 115 8114\nTel: 469 112 5771",
+            VehicleText.BuildOfflineQrContent(v));
+    }
+
+    [Fact]
     public void OfflineQrContent_SinCodigo_NoHaySegundoQr()
     {
         Assert.Null(VehicleText.BuildOfflineQrContent(Sample()));

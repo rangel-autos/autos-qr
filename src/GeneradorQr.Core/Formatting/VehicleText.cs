@@ -22,14 +22,21 @@ public static class VehicleText
             : $"{Brand.FichaUrl}?a={Uri.EscapeDataString(vehicle.Codigo)}";
 
     /// <summary>
-    /// Lo que va en el segundo QR de la ficha impresa ("¿Sin internet?"): los datos del auto como texto,
-    /// que el celular muestra sin conexión. Es <c>null</c> cuando el QR principal ya lleva ese texto (auto sin código).
+    /// Lo que va en el segundo QR de la ficha impresa ("¿Sin internet?"): los datos del auto como texto y los
+    /// teléfonos de la agencia (uno por línea, para que el celular los ofrezca para llamar), que se leen sin conexión.
+    /// Es <c>null</c> cuando el QR principal ya lleva el texto (auto sin código).
     /// </summary>
-    public static string? BuildOfflineQrContent(VehicleRecord vehicle) =>
-        string.IsNullOrWhiteSpace(vehicle.Codigo)
-            ? null
-            // Saltos "\n" fijos para que el QR sea el mismo en Windows y en macOS.
-            : BuildPayload(vehicle).ReplaceLineEndings("\n");
+    public static string? BuildOfflineQrContent(VehicleRecord vehicle)
+    {
+        if (string.IsNullOrWhiteSpace(vehicle.Codigo))
+        {
+            return null;
+        }
+
+        // Saltos "\n" fijos para que el QR sea el mismo en Windows y en macOS.
+        var telefonos = string.Concat(Brand.Telefonos.Select(telefono => $"\nTel: {telefono}"));
+        return $"{BuildPayload(vehicle).ReplaceLineEndings("\n")}\nNúmeros de contacto:{telefonos}";
+    }
 
     /// <summary>
     /// Datos del auto como texto (lo que llevaba el QR antes de las fichas en línea). Con kilómetros es idéntico al de la versión WinForms;

@@ -16,7 +16,10 @@ public static class Brand
     /// </summary>
     public const string FichaUrl = "https://rangel-autos.github.io/";
 
-    public static readonly SKColor Red = new(214, 24, 31);
+    /// <summary>Teléfonos de la agencia. Son los mismos que muestra la ficha en línea (web/index.html).</summary>
+    public static readonly IReadOnlyList<string> Telefonos = ["469 115 8114", "469 112 5771"];
+
+    public static readonly SKColor Red =new(214, 24, 31);
     public static readonly SKColor RedDark = new(172, 15, 21);
     public static readonly SKColor RedPressed = new(140, 10, 16);
     public static readonly SKColor RedTint = new(253, 236, 237);
